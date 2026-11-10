@@ -13,6 +13,9 @@ Provides:
 import io
 import json
 from pathlib import Path
+import threading
+
+_US_SEMAPHORE = threading.Semaphore(3)  # Throttle concurrent simulated ultrasound tasks
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Response

@@ -35,9 +35,9 @@ import trimesh
 
 
 def _create_tube_segment(
-    p1: np.ndarray, p2: np.ndarray, r1: float, r2: float, sections: int = 12
+    p1: np.ndarray, p2: np.ndarray, r1: float, r2: float, sections: int = 24
 ) -> trimesh.Trimesh:
-    """Create a truncated cone/cylinder tube segment connecting p1 to p2."""
+    """Create a truncated cone/cylinder tube segment connecting p1 to p2 with smooth circular profile."""
     v = p2 - p1
     length = float(np.linalg.norm(v))
     if length < 1e-4:
@@ -64,7 +64,7 @@ def _create_tube_segment(
 
 
 def _create_polyline_tube(
-    points: List[np.ndarray], radii: List[float], sections: int = 10
+    points: List[np.ndarray], radii: List[float], sections: int = 24
 ) -> trimesh.Trimesh:
     """Creates a smooth continuous tubular chain through a sequence of 3D points."""
     meshes = []
@@ -144,13 +144,13 @@ class AnatomicalKidneyBuilder:
         phys_verts[:, 1] = y_range[0] + (verts[:, 1] - 1.0) * res
         phys_verts[:, 2] = z_range[0] + (verts[:, 2] - 1.0) * res
 
-        # Correct clockwise winding to standard counter-clockwise outward normals
+        # Standard CCW winding and volume-preserving Taubin smoothing (no shrinkage)
         faces_ccw = faces[:, ::-1] if len(faces) > 0 else faces
         normals_outward = -normals if len(normals) > 0 else normals
         mesh = trimesh.Trimesh(vertices=phys_verts, faces=faces_ccw, vertex_normals=normals_outward, process=True)
         mesh.fix_normals()
         if len(mesh.faces) > 0:
-            trimesh.smoothing.filter_laplacian(mesh, iterations=3)
+            trimesh.smoothing.filter_taubin(mesh, lamb=0.5, nu=0.5128, iterations=8)
 
         # Retain primary continuous anatomical hull and filter any micro-debris < 5 mm3
         parts = trimesh.graph.split(mesh)
@@ -182,11 +182,9 @@ class AnatomicalKidneyBuilder:
 
         dist_outer = (dx_adj / self.rx) ** 2 + (dy / self.ry) ** 2 + (dz / self.rz) ** 2
 
-        # Renal sinus cavity (recessed space for calyces and hilum fat)
-        sinus_rx, sinus_ry, sinus_rz = 8.5, 6.5, 23.0
-        dist_sinus = ((dx + 3.0) / sinus_rx) ** 2 + (dy / sinus_ry) ** 2 + (dz / sinus_rz) ** 2
-
-        cortex_mask = (dist_outer <= 1.0) & (dist_sinus >= 0.80)
+        # Subtle physiological fetal lobulations for authentic organic realism (rather than a smooth plastic egg)
+        lobulation = 0.022 * np.sin(3.0 * dz / 14.0) * np.cos(3.0 * dy / 11.0)
+        cortex_mask = ((dist_outer + lobulation) <= 1.0)
 
         # Coronal cutaway: reveals internal sinus and pyramids
         if cutaway:
@@ -205,14 +203,49 @@ class AnatomicalKidneyBuilder:
         mesh = trimesh.Trimesh(vertices=phys_verts, faces=faces_ccw, vertex_normals=normals_outward, process=True)
         mesh.fix_normals()
         if len(mesh.faces) > 0:
-            trimesh.smoothing.filter_laplacian(mesh, iterations=4)
+            trimesh.smoothing.filter_taubin(mesh, lamb=0.5, nu=0.5128, iterations=8)
             try:
                 mesh = mesh.simplify_quadric_decimation(16000)
             except Exception:
                 pass
 
-        # Color: Warm anatomical pinkish-tan renal cortex
-        color = [205, 120, 110, 160]  # RGBA
+        # Color: Solid deep cortical crimson
+        color = [139, 30, 30, 255]  # RGBA
+        mesh.visual.vertex_colors = np.full((len(mesh.vertices), 4), color, dtype=np.uint8)
+        return mesh
+
+    def build_sinus_adipose_tissue(self) -> trimesh.Trimesh:
+        """
+        Builds lobulated golden adipose cushion filling the renal sinus
+        and cushioning the vascular pedicle and renal pelvis.
+        """
+        res = 1.0
+        x_range = np.arange(self.center[0] - 14.0, self.center[0] + 12.0, res)
+        y_range = np.arange(self.center[1] - 10.0, self.center[1] + 12.0, res)
+        z_range = np.arange(self.center[2] - 30.0, self.center[2] + 30.0, res)
+
+        X, Y, Z = np.meshgrid(x_range, y_range, z_range, indexing='ij')
+        dx = X - self.center[0]
+        dy = Y - self.center[1]
+        dz = Z - self.center[2]
+
+        sinus_rx, sinus_ry, sinus_rz = 6.5, 4.5, 18.0
+        dist_fat = ((dx + 1.5) / sinus_rx) ** 2 + (dy / sinus_ry) ** 2 + (dz / sinus_rz) ** 2
+        fat_noise = 0.08 * np.sin(2.5 * dz / 5.0) * np.cos(2.5 * dx / 4.0)
+        fat_mask = ((dist_fat + fat_noise) <= 1.0) & (dx >= -4.5)
+
+        padded = np.pad(fat_mask, 1, mode='constant', constant_values=0)
+        verts, faces, normals, _ = marching_cubes(padded, level=0.5, spacing=(res, res, res))
+        phys_verts = np.zeros_like(verts)
+        phys_verts[:, 0] = x_range[0] + (verts[:, 0] - 1.0) * res
+        phys_verts[:, 1] = y_range[0] + (verts[:, 1] - 1.0) * res
+        phys_verts[:, 2] = z_range[0] + (verts[:, 2] - 1.0) * res
+
+        mesh = trimesh.Trimesh(vertices=phys_verts, faces=faces[:, ::-1], vertex_normals=-normals, process=True)
+        mesh.fix_normals()
+        if len(mesh.faces) > 0:
+            trimesh.smoothing.filter_taubin(mesh, lamb=0.4, nu=0.41, iterations=6)
+        color = [245, 220, 110, 240]  # RGBA golden adipose
         mesh.visual.vertex_colors = np.full((len(mesh.vertices), 4), color, dtype=np.uint8)
         return mesh
 
@@ -584,8 +617,14 @@ class AnatomicalKidneyBuilder:
         stone.export(str(output_dir / "stones.stl"), file_type="stl")
         results["stones"] = stone_path
 
-        # 10. Combined Master Scene
-        all_meshes = [cortex, capsule, pyramids, collecting, arteries, veins, nerves, nephron, stone]
+        # 10. Renal Sinus Adipose Tissue (Fat cushion)
+        sinus_fat = self.build_sinus_adipose_tissue()
+        fat_path = output_dir / "renal_sinus_fat.glb"
+        sinus_fat.export(str(fat_path), file_type="glb")
+        results["renal_sinus_fat"] = fat_path
+
+        # 11. Combined Master Scene
+        all_meshes = [cortex, capsule, pyramids, collecting, arteries, veins, nerves, nephron, stone, sinus_fat]
         combined = trimesh.Scene(all_meshes)
         comb_path = output_dir / "combined_anatomical_kidney.glb"
         combined.export(str(comb_path), file_type="glb")

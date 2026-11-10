@@ -1,28 +1,3 @@
-    // Automatic Authorization Header Interceptor for HIPAA/FDA Compliance (F-12)
-    (function() {
-      const _origFetch = window.fetch;
-      window.fetch = function(input, init = {}) {
-        try {
-          const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
-          if (url.startsWith('/api/')) {
-            init = init || {};
-            const headers = new Headers(init.headers || {});
-            if (!headers.has('Authorization')) {
-              const stored = localStorage.getItem('acucalyx_doctor_auth');
-              if (stored) {
-                const parsed = JSON.parse(stored);
-                if (parsed && parsed.token) {
-                  headers.set('Authorization', 'Bearer ' + parsed.token);
-                }
-              }
-            }
-            init.headers = headers;
-          }
-        } catch(e) {}
-        return _origFetch.call(this, input, init);
-      };
-    })();
-
     // Global non-blocking Toast notification system (FIX-5)
     window.showToast = window.showToast || function(message, type = 'info', durationMs = 3500) {
       const toast = document.createElement('div');
@@ -35,14 +10,6 @@
         setTimeout(() => toast.remove(), 300);
       }, durationMs);
     };
-
-    function alert(msg) {
-      const isError = /error|failed|rejection|violation|invalid|required/i.test(msg);
-      const isSuccess = /success|passed|saved|completed|unlocked/i.test(msg);
-      const isWarning = /warning|caution|stale|interlock/i.test(msg);
-      const type = isError ? 'error' : (isSuccess ? 'success' : (isWarning ? 'warning' : 'info'));
-      window.showToast(msg, type, isError ? 4500 : 3500);
-    }
 
     let viewer3d = null;
     let currentSlicePlane = 'coronal';
@@ -71,21 +38,41 @@
       try { savedTheme = localStorage.getItem('acucalyx_theme') || 'hybrid'; } catch(e) {}
       applyAppTheme(savedTheme);
 
-      // 1. Initialize Viewers (guard against duplicate WebGL instances)
-      if (!window.viewer3d) {
-        viewer3d = new AcuCalyxViewer3D('three-container');
-        window.viewer3d = viewer3d;
-      } else {
-        viewer3d = window.viewer3d;
-      }
-      viewer3d.setTheme(savedTheme);
+      // 1. Initialize Viewers safely with race condition protection (Bug 0.1)
+      function initCockpitViewports() {
+        if (!viewer3d) {
+          if (window.viewer3d) {
+            viewer3d = window.viewer3d;
+          } else if (typeof AcuCalyxViewer3D !== 'undefined') {
+            try {
+              viewer3d = new AcuCalyxViewer3D('three-container');
+              window.viewer3d = viewer3d;
+            } catch (err) {
+              console.warn('Deferred 3D viewport binding:', err);
+            }
+          }
+        }
+        if (viewer3d && typeof viewer3d.setTheme === 'function') {
+          viewer3d.setTheme(savedTheme);
+        }
 
-      if (!window.mprViewer) {
-        mprViewer = new AcuCalyxMPRViewer('mpr-slice-img', 'mpr-slider', 'mpr-slice-label');
-        window.mprViewer = mprViewer;
-      } else {
-        mprViewer = window.mprViewer;
+        if (!mprViewer) {
+          if (window.mprViewer) {
+            mprViewer = window.mprViewer;
+          } else if (typeof AcuCalyxMPRViewer !== 'undefined') {
+            try {
+              mprViewer = new AcuCalyxMPRViewer('mpr-slice-img', 'mpr-slider', 'mpr-slice-label');
+              window.mprViewer = mprViewer;
+            } catch (err) {
+              console.warn('Deferred MPR viewport binding:', err);
+            }
+          }
+        }
       }
+
+      initCockpitViewports();
+      window.bindCockpitViewport = initCockpitViewports;
+      window.addEventListener('acucalyx:viewport-ready', initCockpitViewports);
 
       // 2. Wire Trajectory Selection from 3D Scene
       window.addEventListener('acucalyx:trajectory-selected', (e) => {
@@ -406,15 +393,16 @@
       const warnBadge = document.getElementById('synthetic-mesh-warning');
       if (warnBadge) warnBadge.style.display = 'block';
       viewer3d.clearScene();
-      await viewer3d.loadMesh(caseId, 'kidney', 'kidney', 0.45);
-      await viewer3d.loadMesh(caseId, 'renal_capsule', 'renal_capsule', 0.20);
-      await viewer3d.loadMesh(caseId, 'medulla_pyramids', 'medulla_pyramids', 0.85);
-      await viewer3d.loadMesh(caseId, 'collecting_system', 'collecting_system', 0.90);
-      await viewer3d.loadMesh(caseId, 'renal_arteries', 'renal_arteries', 0.85);
-      await viewer3d.loadMesh(caseId, 'renal_veins', 'renal_veins', 0.80);
+      await viewer3d.loadMesh(caseId, 'kidney', 'kidney', 0.98);
+      await viewer3d.loadMesh(caseId, 'renal_capsule', 'renal_capsule', 0.85);
+      await viewer3d.loadMesh(caseId, 'medulla_pyramids', 'medulla_pyramids', 0.95);
+      await viewer3d.loadMesh(caseId, 'collecting_system', 'collecting_system', 0.95);
+      await viewer3d.loadMesh(caseId, 'renal_arteries', 'renal_arteries', 0.95);
+      await viewer3d.loadMesh(caseId, 'renal_veins', 'renal_veins', 0.90);
       await viewer3d.loadMesh(caseId, 'renal_nerves', 'renal_nerves', 0.95);
-      await viewer3d.loadMesh(caseId, 'nephron_unit', 'nephrons', 0.85);
+      await viewer3d.loadMesh(caseId, 'nephron_unit', 'nephrons', 0.90);
       await viewer3d.loadMesh(caseId, 'stones', 'stones', 1.0);
+      try { await viewer3d.loadMesh(caseId, 'renal_sinus_fat', 'renal_sinus_fat', 0.95); } catch(e) {}
       try { await viewer3d.loadMesh(caseId, 'colon', 'colon', 0.22); } catch(e) {}
       try { await viewer3d.loadMesh(caseId, 'ribs', 'ribs', 0.50); } catch(e) {}
 
@@ -484,15 +472,16 @@
         }
       }
       viewer3d.clearScene();
-      await viewer3d.loadMesh(caseId, 'kidney', 'kidney', 0.45);
-      await viewer3d.loadMesh(caseId, 'renal_capsule', 'renal_capsule', 0.20);
-      await viewer3d.loadMesh(caseId, 'medulla_pyramids', 'medulla_pyramids', 0.85);
-      await viewer3d.loadMesh(caseId, 'collecting_system', 'collecting_system', 0.90);
-      await viewer3d.loadMesh(caseId, 'renal_arteries', 'renal_arteries', 0.85);
-      await viewer3d.loadMesh(caseId, 'renal_veins', 'renal_veins', 0.80);
+      await viewer3d.loadMesh(caseId, 'kidney', 'kidney', 0.98);
+      await viewer3d.loadMesh(caseId, 'renal_capsule', 'renal_capsule', 0.85);
+      await viewer3d.loadMesh(caseId, 'medulla_pyramids', 'medulla_pyramids', 0.95);
+      await viewer3d.loadMesh(caseId, 'collecting_system', 'collecting_system', 0.95);
+      await viewer3d.loadMesh(caseId, 'renal_arteries', 'renal_arteries', 0.95);
+      await viewer3d.loadMesh(caseId, 'renal_veins', 'renal_veins', 0.90);
       await viewer3d.loadMesh(caseId, 'renal_nerves', 'renal_nerves', 0.95);
-      await viewer3d.loadMesh(caseId, 'nephron_unit', 'nephrons', 0.85);
+      await viewer3d.loadMesh(caseId, 'nephron_unit', 'nephrons', 0.90);
       await viewer3d.loadMesh(caseId, 'stones', 'stones', 1.0);
+      try { await viewer3d.loadMesh(caseId, 'renal_sinus_fat', 'renal_sinus_fat', 0.95); } catch(e) {}
       try { await viewer3d.loadMesh(caseId, 'colon', 'colon', 0.22); } catch(e) {}
       try { await viewer3d.loadMesh(caseId, 'ribs', 'ribs', 0.50); } catch(e) {}
 
@@ -3168,6 +3157,78 @@
       if (gizmoToggle) gizmoToggle.checked = !!s.showGizmo;
     });
 
+    // Minimize / Expand Floating Scalpel Panel
+    function toggleSlicingPanelMinimize() {
+      const panel = document.getElementById('slicing-control-bar');
+      if (!panel) return;
+      const isMin = panel.classList.toggle('minimized');
+      const rows = panel.querySelectorAll('.slice-collapsible-row');
+      rows.forEach((r) => {
+        r.style.display = isMin ? 'none' : (r.id === 'row-parting-gap' ? ((viewer3d && viewer3d.slicingState && viewer3d.slicingState.mode === 'cutaway') ? 'none' : 'flex') : (r.classList.contains('slice-collapsible-row') && r.style.gridTemplateColumns ? 'grid' : 'flex'));
+      });
+      const minBtn = document.getElementById('btn-slice-minimize');
+      if (minBtn) {
+        minBtn.innerHTML = isMin
+          ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>'
+          : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+        minBtn.title = isMin ? 'Expand Scalpel Panel' : 'Minimize Scalpel Panel';
+      }
+    }
+
+    // Draggable Floating Panel
+    function initDraggableScalpelPanel() {
+      const header = document.getElementById('slicing-panel-header');
+      const panel = document.getElementById('slicing-control-bar');
+      if (!header || !panel) return;
+
+      let isDragging = false;
+      let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+
+      header.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select')) return;
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = panel.getBoundingClientRect();
+        const parentRect = panel.parentElement.getBoundingClientRect();
+        startLeft = rect.left - parentRect.left;
+        startTop = rect.top - parentRect.top;
+        e.preventDefault();
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        panel.style.left = `${Math.max(10, Math.min(window.innerWidth - 450, startLeft + dx))}px`;
+        panel.style.top = `${Math.max(10, Math.min(window.innerHeight - 80, startTop + dy))}px`;
+        panel.style.right = 'auto'; // Clear right anchor
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+    }
+
+    // Initialize draggable panel once DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initDraggableScalpelPanel);
+    } else {
+      initDraggableScalpelPanel();
+    }
+
+    // X-Ray / Diagnostic Transparency Toggle
+    function toggleXRayMode() {
+      if (!viewer3d) return;
+      const isXRay = viewer3d.setXRayMode();
+      const btn = document.getElementById('btn-toggle-xray');
+      if (btn) {
+        btn.classList.toggle('active', isXRay);
+        btn.style.background = isXRay ? 'rgba(56, 189, 248, 0.25)' : 'transparent';
+        btn.style.borderColor = isXRay ? '#38bdf8' : 'rgba(56, 189, 248, 0.4)';
+      }
+    }
+
     // Virtual Scalpel & Resection Exports
     window.toggleCameraDropdown = toggleCameraDropdown;
     window.selectCameraPreset = selectCameraPreset;
@@ -3182,6 +3243,8 @@
     window.toggleScalpelDrawMode = toggleScalpelDrawMode;
     window.toggleSliceInvert = toggleSliceInvert;
     window.toggleSlicingToolbar = toggleSlicingToolbar;
+    window.toggleSlicingPanelMinimize = toggleSlicingPanelMinimize;
+    window.toggleXRayMode = toggleXRayMode;
 
     // Backward Compatibility aliases
     window.setSlicePlane = applySlicePreset;

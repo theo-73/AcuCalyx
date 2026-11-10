@@ -4,7 +4,7 @@
 ### PCNL Access Planning Workbench: Computational Geometry, Anatomical Hazard Analysis & Multi-Tract Comparison for Percutaneous Nephrolithotomy (PCNL)
 
 [![Python 3.13](https://img.shields.io/badge/Python-3.13%2B-blue.svg?logo=python&logoColor=white)](https://python.org)
-[![Tests Passing](https://img.shields.io/badge/Tests-296%2F296%20Passing-brightgreen.svg?logo=pytest&logoColor=white)](./tests)
+[![Tests Passing](https://img.shields.io/badge/Tests-312%2F312%20Passing-brightgreen.svg?logo=pytest&logoColor=white)](./tests)
 [![Target Regulatory Architecture](https://img.shields.io/badge/Target%20Pathway-FDA%20Class%20II%20(LLZ)%20CDS-informational.svg)](./docs/regulatory)
 [![Target Software Standard](https://img.shields.io/badge/Target%20Standard-IEC%2062304%20Class%20B%20DHF-blueviolet.svg)](./docs/regulatory/04_IEC_62304_SOFTWARE_LIFECYCLE_AND_SOUP.md)
 [![HIPAA De-ID](https://img.shields.io/badge/HIPAA%20%2F%20PS%203.15-Cryptographic%20PHI%20Guard-success.svg)](./src/acucalyx/cybersecurity/phi_guard.py)
@@ -291,8 +291,9 @@ AcuCalyx/
 │   │   └── schemas.py                 # Strict Pydantic REST API contracts
 │   └── frontend/                      # WebGL Surgical Cockpit
 │       ├── index.html                 # UI cockpit layout, theme toggle, modals
-│       ├── viewer.js                  # Three.js PBR 3D renderer and trajectory cylinders
-│       ├── mpr.js                     # 2D Multi-Planar Reconstruction slice renderer
+│       ├── src/viewport/              # Modular ES6 WebGL 3D & 2D MPR Engines
+│       │   ├── Viewer3D.js            # Three.js PBR 3D renderer, virtual scalpel & bivalve
+│       │   └── MPRViewer.js           # 2D Multi-Planar Reconstruction slice crosshair renderer
 │       └── style.css                  # Dark, Light, and Hybrid clinical themes
 │
 ├── src/acucalyx/                      # Core Computational Geometry & Medical Domain

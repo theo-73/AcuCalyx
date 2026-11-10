@@ -54,7 +54,7 @@ export class WorkbenchView {
           <div style="padding: 24px; text-align: center; color: var(--text-secondary);">
             No Pareto candidate trajectories computed yet for this case.
             <div style="margin-top: 10px;">
-              <button class="btn btn-primary" onclick="window.runPlanning && window.runPlanning()">Run Preop Planning Pipeline</button>
+              <button class="btn btn-primary" onclick="document.getElementById('btn-run-plan')?.click() || (window.runPlanning && window.runPlanning())">Run Preop Planning Pipeline</button>
             </div>
           </div>
         `;
@@ -81,14 +81,52 @@ export class WorkbenchView {
             <tbody>
               ${candidates.map((c, idx) => {
                 const isActive = (c.candidate_id === activeId);
-                const clrMm = c.min_effective_clearance_mm?.value ?? (typeof c.min_effective_clearance_mm === 'number' ? c.min_effective_clearance_mm : '--');
-                const lenMm = c.tract_length_mm?.value ?? (typeof c.tract_length_mm === 'number' ? c.tract_length_mm.toFixed(1) : '--');
-                const stoneFrac = c.reachable_stone_fraction?.value != null 
-                  ? `${(c.reachable_stone_fraction.value * 100).toFixed(0)}%` 
-                  : (typeof c.reachable_stone_fraction === 'number' ? `${(c.reachable_stone_fraction * 100).toFixed(0)}%` : '--');
-                const deflDeg = c.required_scope_deflection_deg?.value != null
-                  ? `${c.required_scope_deflection_deg.value.toFixed(1)}°`
-                  : (typeof c.required_scope_deflection_deg === 'number' ? `${c.required_scope_deflection_deg.toFixed(1)}°` : '--');
+
+                // Safety clearance: support colon/pleural/vascular clearance from comparison matrix or min_effective_clearance_mm
+                let clearanceVal = null;
+                if (c.min_effective_clearance_mm?.value != null) {
+                  clearanceVal = c.min_effective_clearance_mm.value;
+                } else if (typeof c.min_effective_clearance_mm === 'number') {
+                  clearanceVal = c.min_effective_clearance_mm;
+                } else if (c.colon_clearance?.value != null) {
+                  const clearances = [
+                    c.colon_clearance.value,
+                    c.pleural_clearance?.value ?? 999,
+                    c.vascular_clearance?.value ?? 999
+                  ];
+                  clearanceVal = Math.min(...clearances);
+                }
+                const clrMm = clearanceVal != null ? `${clearanceVal.toFixed(1)}` : '--';
+
+                // Tract length
+                const lenVal = c.tract_length_mm?.value ?? (typeof c.tract_length_mm === 'number' ? c.tract_length_mm : null);
+                const lenMm = lenVal != null ? lenVal.toFixed(1) : '--';
+
+                // Stone access: support rigid_accessible_stone_percent from comparison matrix or reachable_stone_fraction
+                let stonePercent = null;
+                if (c.rigid_accessible_stone_percent?.value != null) {
+                  stonePercent = c.rigid_accessible_stone_percent.value;
+                } else if (typeof c.rigid_accessible_stone_percent === 'number') {
+                  stonePercent = c.rigid_accessible_stone_percent;
+                } else if (c.reachable_stone_fraction?.value != null) {
+                  stonePercent = c.reachable_stone_fraction.value * 100;
+                } else if (typeof c.reachable_stone_fraction === 'number') {
+                  stonePercent = c.reachable_stone_fraction * 100;
+                }
+                const stoneFrac = stonePercent != null ? `${Math.round(stonePercent)}%` : '--';
+
+                // Scope deflection / coronal puncture angle
+                let deflectionVal = null;
+                if (c.required_scope_deflection_deg?.value != null) {
+                  deflectionVal = c.required_scope_deflection_deg.value;
+                } else if (typeof c.required_scope_deflection_deg === 'number') {
+                  deflectionVal = c.required_scope_deflection_deg;
+                } else if (c.puncture_angle_coronal_deg?.value != null) {
+                  deflectionVal = c.puncture_angle_coronal_deg.value;
+                } else if (typeof c.puncture_angle_coronal_deg === 'number') {
+                  deflectionVal = c.puncture_angle_coronal_deg;
+                }
+                const deflDeg = deflectionVal != null ? `${deflectionVal.toFixed(1)}°` : '--';
 
                 return `
                   <tr style="border-bottom: 1px solid var(--border-color); ${isActive ? 'background: rgba(0, 229, 163, 0.08);' : ''}">

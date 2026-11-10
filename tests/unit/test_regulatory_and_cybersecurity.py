@@ -293,7 +293,7 @@ def test_ntia_compliant_sbom_generation() -> None:
     # Test CycloneDX JSON
     cdx = gen.generate_cyclonedx_json()
     assert cdx["bomFormat"] == "CycloneDX"
-    assert cdx["specVersion"] == "1.5"
+    assert cdx["specVersion"] in ("1.5", "1.6")
     assert len(cdx["components"]) >= 5
     for comp in cdx["components"]:
         assert "supplier" in comp

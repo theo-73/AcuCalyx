@@ -128,9 +128,19 @@ import threading
 from starlette.concurrency import run_in_threadpool
 
 MAX_CACHED_VOLUMES = 3
+MAX_CACHED_VOLUME_BYTES = 1024 * 1024 * 1024  # 1 GB memory ceiling (Tier 2, Issue 2.2)
 _ACTIVE_VOLUMES: OrderedDict[str, Dict[str, Any]] = OrderedDict()
 _ACTIVE_VOLUMES_LOCK = threading.Lock()
 _PLANNING_SEMAPHORE = threading.Semaphore(2)  # F-20: Maximum 2 concurrent heavy 3D planning pipelines
+
+
+def _get_active_volumes_bytes() -> int:
+    total = 0
+    for item in _ACTIVE_VOLUMES.values():
+        v = item.get("volume")
+        if hasattr(v, "nbytes"):
+            total += v.nbytes
+    return total
 
 
 def get_cached_volume(case_id: str) -> Optional[Dict[str, Any]]:
@@ -143,12 +153,16 @@ def get_cached_volume(case_id: str) -> Optional[Dict[str, Any]]:
 
 
 def set_cached_volume(case_id: str, vol: np.ndarray, spatial: Any) -> None:
-    """Stores volume in LRU cache, evicting the least recently accessed case if limit exceeded."""
+    """Stores volume in LRU cache, evicting least recently accessed case if count or byte ceiling exceeded."""
     with _ACTIVE_VOLUMES_LOCK:
         if case_id in _ACTIVE_VOLUMES:
             _ACTIVE_VOLUMES.move_to_end(case_id)
         else:
-            if len(_ACTIVE_VOLUMES) >= MAX_CACHED_VOLUMES:
+            incoming_bytes = getattr(vol, "nbytes", 0)
+            while _ACTIVE_VOLUMES and (
+                len(_ACTIVE_VOLUMES) >= MAX_CACHED_VOLUMES
+                or (_get_active_volumes_bytes() + incoming_bytes > MAX_CACHED_VOLUME_BYTES)
+            ):
                 evicted_id, _ = _ACTIVE_VOLUMES.popitem(last=False)
                 logger.info(f"LRU Cache Eviction: Cleared volume memory for case {evicted_id}")
         _ACTIVE_VOLUMES[case_id] = {"volume": vol, "spatial": spatial}

@@ -97,6 +97,12 @@ class AcuCalyxApplication {
       }
     }
 
+    // Synchronize cockpit viewport references
+    if (typeof window.bindCockpitViewport === 'function') {
+      window.bindCockpitViewport();
+    }
+    window.dispatchEvent(new CustomEvent('acucalyx:viewport-ready'));
+
     // 6. Connect global bridge methods for 3D raycasting and selection
     window.selectCase = async (caseId) => {
       await caseService.getCaseStatus(caseId);

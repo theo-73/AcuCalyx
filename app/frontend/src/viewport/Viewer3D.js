@@ -69,8 +69,8 @@ class AcuCalyxViewer3D {
     this.camera.position.set(17.0, -160.0, 50.0); // En-face coronal posterior view
     this.camera.up.set(0, 0, 1); // Cranial is +Z
 
-    // 3. Renderer with alpha: true for seamless clinical studio blending
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    // 3. Renderer with alpha: true and stencil: true for solid capping and clinical studio blending
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, stencil: true });
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.0));
 
@@ -80,6 +80,22 @@ class AcuCalyxViewer3D {
     // Enable calibrated directional shadow maps
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    // WebGL Context Loss & Restoration Resilience (Tier 1, Issue 1.4)
+    this.renderer.domElement.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      console.warn('AcuCalyx WebGL context lost. Pausing rendering loop...');
+      if (this.animFrameId) {
+        cancelAnimationFrame(this.animFrameId);
+        this.animFrameId = null;
+      }
+    }, false);
+
+    this.renderer.domElement.addEventListener('webglcontextrestored', () => {
+      console.info('AcuCalyx WebGL context restored. Re-initializing scene resources...');
+      this.init();
+      this.animate();
+    }, false);
 
     if (typeof THREE.SRGBColorSpace !== 'undefined') {
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -138,6 +154,9 @@ class AcuCalyxViewer3D {
     rimLight.position.set(0, 120, -100);
     this.scene.add(rimLight);
 
+    // Image-Based Lighting (IBL) Environment Map for glistening wet surgical PBR reflections
+    this.setupEnvironment();
+
     // 7. Subtle Studio Ground Reference Shadow
     const shadowCanvas = document.createElement('canvas');
     shadowCanvas.width = 128;
@@ -185,7 +204,7 @@ class AcuCalyxViewer3D {
   }
 
   animate() {
-    requestAnimationFrame(() => this.animate());
+    this.animFrameId = requestAnimationFrame(() => this.animate());
     if (this.controls) this.controls.update();
     this.renderer.render(this.scene, this.camera);
     if (this.labelRenderer) {
@@ -204,6 +223,74 @@ class AcuCalyxViewer3D {
     if (this.labelRenderer) {
       this.labelRenderer.setSize(width, height);
     }
+  }
+
+  /**
+   * Builds calibrated surgical studio IBL environment map via PMREMGenerator
+   * giving MeshPhysicalMaterial glistening, wet mucosal tissue sheen and specular clearcoat.
+   */
+  setupEnvironment() {
+    if (typeof THREE.PMREMGenerator === 'undefined') return;
+    try {
+      const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+      const envScene = new THREE.Scene();
+
+      // Surgical studio fill & overhead luminaires
+      const overheadLight = new THREE.DirectionalLight(0xffffff, 2.2);
+      overheadLight.position.set(0, 50, 40);
+      envScene.add(overheadLight);
+
+      const coolFill = new THREE.DirectionalLight(0x38bdf8, 0.8);
+      coolFill.position.set(-40, -30, 20);
+      envScene.add(coolFill);
+
+      const warmRim = new THREE.DirectionalLight(0xfef08a, 0.6);
+      warmRim.position.set(40, -20, -30);
+      envScene.add(warmRim);
+
+      const renderTarget = pmremGenerator.fromScene(envScene);
+      this.scene.environment = renderTarget.texture;
+      pmremGenerator.dispose();
+    } catch (e) {
+      console.warn("Could not generate PMREM studio environment:", e);
+    }
+  }
+
+  /**
+   * Generates procedural anatomical cross-section texture for solid bivalve cut faces
+   * with cortical crimson rim, dark medullary pyramids, and central renal sinus fat.
+   */
+  createParenchymalCrossSectionTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // Concentric anatomical tissue gradient
+    const grad = ctx.createRadialGradient(256, 256, 25, 256, 256, 240);
+    grad.addColorStop(0.00, '#fef08a'); // Renal sinus fat & calyx cavity (pale cream/ivory)
+    grad.addColorStop(0.18, '#581418'); // Striated medullary pyramids (deep wine/burgundy)
+    grad.addColorStop(0.48, '#842020'); // Renal cortex columns of Bertin
+    grad.addColorStop(0.85, '#8b1e1e'); // Outer renal cortex
+    grad.addColorStop(0.98, '#5b1e1e'); // Subcapsular vascular zone
+    grad.addColorStop(1.00, '#451a03'); // Fibrous capsule rim
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Micro-granular tubule noise for fleshy biological look
+    const imgData = ctx.getImageData(0, 0, 512, 512);
+    const data = imgData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const n = (Math.random() - 0.5) * 22;
+      data[i] = Math.min(255, Math.max(0, data[i] + n));
+      data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + n * 0.6));
+      data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + n * 0.4));
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    return texture;
   }
 
   clearScene() {
@@ -282,43 +369,61 @@ class AcuCalyxViewer3D {
             child.renderOrder = 30; // Always render clearly in front of internal cavities
           } else if (organKey === 'kidney') {
             // Warm anatomical renal cortex parenchyma with realistic subsurface tone
+            const isTransp = defaultOpacity < 0.95;
             child.material = new THREE.MeshPhysicalMaterial({
-              color: 0x9b2c2c,
-              roughness: 0.55,
+              color: 0x8b1e1e, // Deep anatomical cortical crimson
+              roughness: 0.48,
               metalness: 0.02,
-              clearcoat: 0.22,
-              clearcoatRoughness: 0.30,
-              transparent: true,
+              clearcoat: 0.35,
+              clearcoatRoughness: 0.20,
+              transparent: isTransp,
               opacity: defaultOpacity,
-              depthWrite: false,
+              depthWrite: !isTransp,
               clippingPlanes: this.clippingPlanes,
               clipShadows: true,
               side: THREE.DoubleSide
             });
             child.renderOrder = 10;
           } else if (organKey === 'renal_capsule') {
-            // Fibrous renal capsule: delicate translucent outer sheath
+            // Fibrous renal capsule: deep mahogany glistening outer sheath
+            const isTransp = defaultOpacity < 0.95;
             child.material = new THREE.MeshPhysicalMaterial({
-              color: 0xd4b8a5,
-              roughness: 0.45,
+              color: 0x691e1e, // Authentic anatomical glistening mahogany fibrous sheath
+              roughness: 0.35,
               metalness: 0.04,
-              clearcoat: 0.35,
-              clearcoatRoughness: 0.25,
-              transparent: true,
+              clearcoat: 0.65,
+              clearcoatRoughness: 0.18,
+              transparent: isTransp,
               opacity: defaultOpacity,
-              depthWrite: false,
+              depthWrite: !isTransp,
               clippingPlanes: this.clippingPlanes,
               clipShadows: true,
               side: THREE.DoubleSide
             });
             child.renderOrder = 11;
+          } else if (organKey === 'renal_sinus_fat') {
+            // Warm creamy golden adipose tissue cushioning renal pelvis
+            child.material = new THREE.MeshPhysicalMaterial({
+              color: 0xfef08a,
+              roughness: 0.60,
+              metalness: 0.02,
+              clearcoat: 0.20,
+              clearcoatRoughness: 0.30,
+              transparent: false,
+              opacity: 1.0,
+              depthWrite: true,
+              clippingPlanes: this.clippingPlanes,
+              clipShadows: true,
+              side: THREE.DoubleSide
+            });
+            child.renderOrder = 5;
           } else if (organKey === 'medulla_pyramids') {
             // Striated medullary pyramids: rich anatomical wine/burgundy medulla
             child.material = new THREE.MeshPhysicalMaterial({
-              color: 0x781d22,
+              color: 0x5c1317,
               roughness: 0.65,
               metalness: 0.02,
-              clearcoat: 0.15,
+              clearcoat: 0.20,
               clearcoatRoughness: 0.35,
               transparent: true,
               opacity: defaultOpacity,
@@ -328,13 +433,13 @@ class AcuCalyxViewer3D {
             });
             child.renderOrder = 2;
           } else if (organKey === 'collecting_system') {
-            // Glistening mucosal calyces and pelvis: pale opalescent light blue/pearly urothelium
+            // Glistening mucosal calyces and pelvis: pale opalescent pearly urothelium (corrected from blue plastic)
             child.material = new THREE.MeshPhysicalMaterial({
-              color: 0x93c5fd,
-              roughness: 0.25,
+              color: 0xf1f5f9, // Natural pearly mucosal ivory-cream urothelium
+              roughness: 0.22,
               metalness: 0.04,
-              clearcoat: 0.65,
-              clearcoatRoughness: 0.18,
+              clearcoat: 0.80,
+              clearcoatRoughness: 0.12,
               transparent: true,
               opacity: defaultOpacity,
               depthWrite: false,
@@ -473,25 +578,61 @@ class AcuCalyxViewer3D {
     const dir = new THREE.Vector3().subVectors(end, start);
     const length = dir.length();
 
-    // 1. Needle Shaft (18 Gauge PCNL Trocar)
-    const shaftRadius = isActive ? 1.0 : 0.6;
+    // 1. Surgical Steel 18-Gauge PCNL Trocar Shaft
+    const shaftRadius = isActive ? 0.9 : 0.6;
     const shaftGeo = new THREE.CylinderGeometry(shaftRadius, shaftRadius, length, 16);
     shaftGeo.translate(0, length / 2, 0);
     shaftGeo.rotateX(Math.PI / 2);
 
     const shaftMat = new THREE.MeshStandardMaterial({
-      color: colorHex,
-      roughness: 0.25,
-      metalness: 0.85,
+      color: 0xe2e8f0, // Medical-grade surgical stainless steel
+      roughness: 0.18,
+      metalness: 0.95,
       emissive: isActive ? colorHex : 0x000000,
-      emissiveIntensity: isActive ? 0.35 : 0.0
+      emissiveIntensity: isActive ? 0.25 : 0.0
     });
     const shaftMesh = new THREE.Mesh(shaftGeo, shaftMat);
     shaftMesh.position.copy(start);
     shaftMesh.lookAt(end);
     trajGroup.add(shaftMesh);
 
-    // 2. Entry Bullseye Ring
+    // 2. High-Contrast Laser-Etched 10mm Depth Rings (Clinical insertion depth gauge)
+    const numRings = Math.floor(length / 10);
+    for (let i = 1; i <= numRings; i++) {
+      const ringDepthMm = i * 10;
+      const isMajorMark = (ringDepthMm % 50 === 0);
+      const ringGeo = new THREE.CylinderGeometry(shaftRadius + 0.08, shaftRadius + 0.08, 1.2, 16);
+      ringGeo.translate(0, ringDepthMm, 0);
+      ringGeo.rotateX(Math.PI / 2);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: isMajorMark ? 0xef4444 : 0x0f172a // Red every 50mm, dark slate every 10mm
+      });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.position.copy(start);
+      ring.lookAt(end);
+      trajGroup.add(ring);
+    }
+
+    // 3. 30 Fr (10mm OD) Amplatz Sheath Dilation Safety Corridor Sleeve (Displayed ONLY on active trajectory to eliminate clutter)
+    const corridorGeo = new THREE.CylinderGeometry(5.0, 5.0, length, 24);
+    corridorGeo.translate(0, length / 2, 0);
+    corridorGeo.rotateX(Math.PI / 2);
+    const corridorMat = new THREE.MeshStandardMaterial({
+      color: colorHex,
+      transparent: true,
+      opacity: 0.22,
+      roughness: 0.35,
+      metalness: 0.10,
+      depthWrite: false
+    });
+    const corridorMesh = new THREE.Mesh(corridorGeo, corridorMat);
+    corridorMesh.name = 'safetyCorridor';
+    corridorMesh.visible = !!isActive;
+    corridorMesh.position.copy(start);
+    corridorMesh.lookAt(end);
+    trajGroup.add(corridorMesh);
+
+    // 4. Entry Bullseye Ring
     const ringRadius = isActive ? 3.0 : 2.0;
     const ringGeo = new THREE.TorusGeometry(ringRadius, 0.4, 8, 24);
     const ringMat = new THREE.MeshBasicMaterial({ color: colorHex });
@@ -500,7 +641,7 @@ class AcuCalyxViewer3D {
     ringMesh.lookAt(end);
     trajGroup.add(ringMesh);
 
-    // 3. Target Papilla Bevel Tip
+    // 5. Target Papilla Bevel Tip
     const coneRadius = isActive ? 1.5 : 1.0;
     const coneGeo = new THREE.ConeGeometry(coneRadius, 3.5, 16);
     coneGeo.translate(0, -1.75, 0);
@@ -535,6 +676,9 @@ class AcuCalyxViewer3D {
         this.activeTrajectoryVector = new THREE.Vector3().subVectors(end, start).normalize();
       }
       t.object.traverse((child) => {
+        if (child.name === 'safetyCorridor') {
+          child.visible = isAct;
+        }
         if (child.isMesh && child.material) {
           if (child.material.emissive) {
             child.material.emissiveIntensity = isAct ? 0.35 : 0.0;
@@ -594,25 +738,75 @@ class AcuCalyxViewer3D {
   /**
    * Sets clinical camera preset with standard urological/radiological alignment.
    */
+  /**
+   * Smooth camera position & lookAt spherical interpolation (Tier 5, Issue 5.2)
+   */
+  animateCameraTo(targetPos, targetLookAt, duration = 250) {
+    if (!this.camera || !this.controls) return;
+
+    const prefersReducedMotion = typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion || duration <= 0) {
+      this.camera.position.copy(targetPos);
+      if (targetLookAt) this.controls.target.copy(targetLookAt);
+      this.camera.lookAt(this.controls.target);
+      this.controls.update();
+      return;
+    }
+
+    const startPos = this.camera.position.clone();
+    const startTarget = this.controls.target.clone();
+    const endTarget = targetLookAt ? targetLookAt.clone() : startTarget;
+    const startTime = performance.now();
+
+    if (this._cameraTweenId) {
+      cancelAnimationFrame(this._cameraTweenId);
+      this._cameraTweenId = null;
+    }
+
+    const step = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1.0, elapsed / duration);
+      // Emil Kowalski standard cubic easing: cubic-bezier(0.16, 1, 0.3, 1)
+      const ease = 1 - Math.pow(1 - progress, 3);
+
+      this.camera.position.lerpVectors(startPos, targetPos, ease);
+      this.controls.target.lerpVectors(startTarget, endTarget, ease);
+      this.camera.lookAt(this.controls.target);
+      this.controls.update();
+
+      if (progress < 1.0) {
+        this._cameraTweenId = requestAnimationFrame(step);
+      } else {
+        this._cameraTweenId = null;
+      }
+    };
+
+    this._cameraTweenId = requestAnimationFrame(step);
+  }
+
   setClinicalView(preset) {
     if (!this.controls || !this.camera) return;
     const target = new THREE.Vector3(17.0, 14.0, 50.0);
-    this.controls.target.copy(target);
+    let targetPos = new THREE.Vector3(17.0, -160.0, 50.0);
+    let targetLookAt = target;
 
     switch (preset) {
       case 'ap':
       case 'posterior':
         // Anteroposterior 0° direct posterior surgical view
-        this.camera.position.set(17.0, -160.0, 50.0);
+        targetPos.set(17.0, -160.0, 50.0);
         break;
       case 'flank':
       case 'lateral':
         // Lateral Flank 90° profile
-        this.camera.position.set(190.0, 14.0, 50.0);
+        targetPos.set(190.0, 14.0, 50.0);
         break;
       case 'oblique':
         // 30° Ipsilateral Oblique fluoroscopic working angle
-        this.camera.position.set(110.0, -130.0, 50.0);
+        targetPos.set(110.0, -130.0, 50.0);
         break;
       case 'bullseye':
         // Aligned along active trajectory trocar vector
@@ -622,22 +816,19 @@ class AcuCalyxViewer3D {
             const start = new THREE.Vector3(...t.candidate.entry_point_lps);
             const end = new THREE.Vector3(...t.candidate.target_point_lps);
             const dir = new THREE.Vector3().subVectors(end, start).normalize();
-            this.camera.position.copy(start.clone().sub(dir.clone().multiplyScalar(100)));
-            this.controls.target.copy(end);
+            targetPos.copy(start.clone().sub(dir.clone().multiplyScalar(100)));
+            targetLookAt = end;
           }
-        } else {
-          this.camera.position.set(17.0, -160.0, 50.0);
         }
         break;
       case 'stone':
         this.focusOnStone();
-        break;
+        return;
       default:
-        this.camera.position.set(17.0, -160.0, 50.0);
+        targetPos.set(17.0, -160.0, 50.0);
         break;
     }
-    this.camera.lookAt(this.controls.target);
-    this.controls.update();
+    this.animateCameraTo(targetPos, targetLookAt, 250);
   }
 
   setCameraView(viewPreset) {
@@ -814,6 +1005,8 @@ class AcuCalyxViewer3D {
       this.sliceGizmo.traverse((c) => this._disposeNode(c));
       this.sliceGizmo = null;
     }
+    this.capMeshA = null;
+    this.capMeshB = null;
     this.bivalveMeshesA = {};
     this.bivalveMeshesB = {};
   }
@@ -852,6 +1045,40 @@ class AcuCalyxViewer3D {
       this.bivalveMeshesB[key] = cloneB;
       this.bivalveGroupB.add(cloneB);
     }
+
+    // Solid Anatomical Cross-Section Capping Discs (Eliminates hollow eggshell look)
+    const capTex = this.createParenchymalCrossSectionTexture();
+    const capGeo = new THREE.PlaneGeometry(48, 96);
+
+    const capMatA = new THREE.MeshPhysicalMaterial({
+      map: capTex,
+      roughness: 0.40,
+      metalness: 0.02,
+      clearcoat: 0.70,
+      clearcoatRoughness: 0.15,
+      side: THREE.DoubleSide,
+      clippingPlanes: [], // Crucial: do not clip cap with the plane it caps
+      clipShadows: false,
+    });
+    this.capMeshA = new THREE.Mesh(capGeo, capMatA);
+    this.capMeshA.name = 'bivalveCapA';
+    this.capMeshA.renderOrder = 35;
+    this.bivalveGroupA.add(this.capMeshA);
+
+    const capMatB = new THREE.MeshPhysicalMaterial({
+      map: capTex,
+      roughness: 0.40,
+      metalness: 0.02,
+      clearcoat: 0.70,
+      clearcoatRoughness: 0.15,
+      side: THREE.DoubleSide,
+      clippingPlanes: [], // Crucial: do not clip cap with the plane it caps
+      clipShadows: false,
+    });
+    this.capMeshB = new THREE.Mesh(capGeo, capMatB);
+    this.capMeshB.name = 'bivalveCapB';
+    this.capMeshB.renderOrder = 35;
+    this.bivalveGroupB.add(this.capMeshB);
 
     this.scene.add(this.bivalveGroupA);
     this.scene.add(this.bivalveGroupB);
@@ -929,6 +1156,18 @@ class AcuCalyxViewer3D {
       const vis = (this._layerVisibility[key] !== false);
       if (this.bivalveMeshesA[key]) this.bivalveMeshesA[key].visible = vis;
       if (this.bivalveMeshesB[key]) this.bivalveMeshesB[key].visible = vis;
+    }
+
+    // Position and align solid parenchymal cross-section capping discs
+    if (this.capMeshA) {
+      this.capMeshA.position.copy(P0);
+      this.capMeshA.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+      this.capMeshA.visible = true;
+    }
+    if (this.capMeshB) {
+      this.capMeshB.position.copy(P0);
+      this.capMeshB.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+      this.capMeshB.visible = isBivalve;
     }
 
     // Update 3D holographic resection disc
@@ -1090,14 +1329,19 @@ class AcuCalyxViewer3D {
       if (!obj) return;
       obj.traverse((child) => {
         if (child.isMesh && child.material) {
+          const isTransp = opacity < 0.95;
           if (Array.isArray(child.material)) {
             child.material.forEach((m) => {
               m.opacity = opacity;
-              m.transparent = opacity < 1.0;
+              m.transparent = isTransp;
+              m.depthWrite = !isTransp;
+              m.needsUpdate = true;
             });
           } else {
             child.material.opacity = opacity;
-            child.material.transparent = opacity < 1.0;
+            child.material.transparent = isTransp;
+            child.material.depthWrite = !isTransp;
+            child.material.needsUpdate = true;
           }
         }
       });
@@ -1105,6 +1349,19 @@ class AcuCalyxViewer3D {
     updateOpacity(this.meshes[organKey]);
     if (this.bivalveMeshesA) updateOpacity(this.bivalveMeshesA[organKey]);
     if (this.bivalveMeshesB) updateOpacity(this.bivalveMeshesB[organKey]);
+  }
+
+  /**
+   * Toggles X-Ray / Diagnostic silhouette transparency mode for non-destructive calculus inspection
+   */
+  setXRayMode(enabled) {
+    this.isXRayMode = (enabled !== undefined) ? !!enabled : !this.isXRayMode;
+    const targetParenchymaOpacity = this.isXRayMode ? 0.22 : 0.98;
+    const targetCapsuleOpacity = this.isXRayMode ? 0.12 : 0.85;
+
+    this.setLayerOpacity('kidney', targetParenchymaOpacity);
+    this.setLayerOpacity('renal_capsule', targetCapsuleOpacity);
+    return this.isXRayMode;
   }
 
   setTheme(theme) {

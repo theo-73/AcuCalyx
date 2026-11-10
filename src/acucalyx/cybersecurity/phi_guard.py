@@ -10,6 +10,9 @@ from __future__ import annotations
 import hashlib
 import hmac
 import os
+import secrets
+
+_EPHEMERAL_DEV_SECRET = secrets.token_bytes(32)
 import warnings
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -118,12 +121,12 @@ class PHIGuard:
             selected_key = env_key.encode("utf-8")
         else:
             warnings.warn(
-                "PHIGuard: Using default canonical development secret. In clinical/production deployments, "
+                "PHIGuard: Using ephemeral random development secret. In clinical/production deployments, "
                 "set the ACUCALYX_DEID_SECRET environment variable to prevent deterministic pseudonym recovery.",
                 RuntimeWarning,
                 stacklevel=2,
             )
-            selected_key = b"ACUCALYX_CANONICAL_TEST_SECRET_2026"
+            selected_key = _EPHEMERAL_DEV_SECRET
         self.pseudonymizer = HMACPseudonymizer(selected_key)
 
     def deidentify(self, ds: Dataset) -> Dataset:

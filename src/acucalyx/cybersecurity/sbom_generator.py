@@ -119,12 +119,12 @@ class SBOMGenerator:
         self.author = "AcuCalyx Software Engineering / Premarket Cybersecurity Team"
         self.timestamp = datetime.now(timezone.utc).isoformat()
 
-    def generate_cyclonedx_json(self) -> Dict[str, Any]:
-        """Generate machine-readable CycloneDX v1.5 JSON SBOM."""
+    def generate_cyclonedx_json(self, spec_version: str = "1.6") -> Dict[str, Any]:
+        """Generate machine-readable CycloneDX v1.6 (or v1.5) JSON SBOM."""
         return {
-            "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
+            "$schema": f"http://cyclonedx.org/schema/bom-{spec_version}.schema.json",
             "bomFormat": "CycloneDX",
-            "specVersion": "1.5",
+            "specVersion": spec_version,
             "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
             "version": 1,
             "metadata": {

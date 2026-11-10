@@ -10,6 +10,9 @@ Implements Step 4.09 of Phase 4 (Frozen v4.1):
 import io
 import json
 from pathlib import Path
+import threading
+
+_DRR_SEMAPHORE = threading.Semaphore(3)  # Throttle concurrent raycast tasks
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Response
