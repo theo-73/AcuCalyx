@@ -53,7 +53,7 @@ TOKEN_EXPIRY_HOURS = 24
 
 # Active session revocation list (in-memory & disk-backed with TTL eviction)
 _REVOKED_TOKEN_EXPIRIES: Dict[str, float] = {}
-_REVOKED_LOCK = threading.Lock()
+_REVOKED_LOCK = threading.RLock()
 REVOKED_TOKENS_FILE = DATA_DIR / "revoked_tokens.json"
 
 
@@ -66,15 +66,21 @@ def _load_revoked_tokens() -> None:
                 now = time.time()
                 _REVOKED_TOKEN_EXPIRIES = {k: float(v) for k, v in data.items() if float(v) > now}
         except Exception:
-            pass
+            _REVOKED_TOKEN_EXPIRIES = {}
 
 
 def _save_revoked_tokens() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     temp = REVOKED_TOKENS_FILE.with_suffix(f".tmp_{secrets.token_hex(4)}")
     try:
+        now = time.time()
+        # Clean up any tokens that have already expired past their TTL
+        with _REVOKED_LOCK:
+            active_revoked = {k: float(v) for k, v in _REVOKED_TOKEN_EXPIRIES.items() if float(v) > now}
+            _REVOKED_TOKEN_EXPIRIES.clear()
+            _REVOKED_TOKEN_EXPIRIES.update(active_revoked)
         with open(temp, "w", encoding="utf-8") as f:
-            json.dump(_REVOKED_TOKEN_EXPIRIES, f)
+            json.dump(active_revoked, f)
         temp.replace(REVOKED_TOKENS_FILE)
     except Exception:
         pass

@@ -45,7 +45,9 @@ class CaseService {
   async getCaseStatus(caseId) {
     const status = await api.get(`/api/cases/${caseId}/status`);
     this.currentCaseId = caseId;
+    window.currentCaseId = caseId;
     this.currentMeta = status;
+    window.currentCaseMeta = status;
     this.notify('case_selected', status);
     return status;
   }

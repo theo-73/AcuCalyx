@@ -1029,7 +1029,15 @@ class AcuCalyxViewer3D {
     this.bivalveMeshesA = {};
     this.bivalveMeshesB = {};
 
-    const SLICEABLE_ORGANS = ['kidney', 'capsule', 'pyramids', 'collecting', 'arteries', 'veins', 'nerves'];
+    const SLICEABLE_ORGANS = [
+      'kidney', 'renal_capsule', 'capsule',
+      'medulla_pyramids', 'pyramids',
+      'collecting_system', 'collecting',
+      'renal_arteries', 'arteries',
+      'renal_veins', 'veins',
+      'renal_nerves', 'nerves',
+      'renal_sinus_fat'
+    ];
 
     for (const key of SLICEABLE_ORGANS) {
       const orig = this.meshes[key];
@@ -1046,40 +1054,6 @@ class AcuCalyxViewer3D {
       this.bivalveGroupB.add(cloneB);
     }
 
-    // Solid Anatomical Cross-Section Capping Discs (Eliminates hollow eggshell look)
-    const capTex = this.createParenchymalCrossSectionTexture();
-    const capGeo = new THREE.PlaneGeometry(48, 96);
-
-    const capMatA = new THREE.MeshPhysicalMaterial({
-      map: capTex,
-      roughness: 0.40,
-      metalness: 0.02,
-      clearcoat: 0.70,
-      clearcoatRoughness: 0.15,
-      side: THREE.DoubleSide,
-      clippingPlanes: [], // Crucial: do not clip cap with the plane it caps
-      clipShadows: false,
-    });
-    this.capMeshA = new THREE.Mesh(capGeo, capMatA);
-    this.capMeshA.name = 'bivalveCapA';
-    this.capMeshA.renderOrder = 35;
-    this.bivalveGroupA.add(this.capMeshA);
-
-    const capMatB = new THREE.MeshPhysicalMaterial({
-      map: capTex,
-      roughness: 0.40,
-      metalness: 0.02,
-      clearcoat: 0.70,
-      clearcoatRoughness: 0.15,
-      side: THREE.DoubleSide,
-      clippingPlanes: [], // Crucial: do not clip cap with the plane it caps
-      clipShadows: false,
-    });
-    this.capMeshB = new THREE.Mesh(capGeo, capMatB);
-    this.capMeshB.name = 'bivalveCapB';
-    this.capMeshB.renderOrder = 35;
-    this.bivalveGroupB.add(this.capMeshB);
-
     this.scene.add(this.bivalveGroupA);
     this.scene.add(this.bivalveGroupB);
 
@@ -1090,7 +1064,15 @@ class AcuCalyxViewer3D {
    * Core GPU Slicing & Bivalve Parting Separation Execution
    */
   updateSlicing() {
-    const SLICEABLE_ORGANS = ['kidney', 'capsule', 'pyramids', 'collecting', 'arteries', 'veins', 'nerves'];
+    const SLICEABLE_ORGANS = [
+      'kidney', 'renal_capsule', 'capsule',
+      'medulla_pyramids', 'pyramids',
+      'collecting_system', 'collecting',
+      'renal_arteries', 'arteries',
+      'renal_veins', 'veins',
+      'renal_nerves', 'nerves',
+      'renal_sinus_fat'
+    ];
     if (!this.slicingState.enabled) {
       if (this.bivalveGroupA) this.bivalveGroupA.visible = false;
       if (this.bivalveGroupB) this.bivalveGroupB.visible = false;
@@ -1156,18 +1138,6 @@ class AcuCalyxViewer3D {
       const vis = (this._layerVisibility[key] !== false);
       if (this.bivalveMeshesA[key]) this.bivalveMeshesA[key].visible = vis;
       if (this.bivalveMeshesB[key]) this.bivalveMeshesB[key].visible = vis;
-    }
-
-    // Position and align solid parenchymal cross-section capping discs
-    if (this.capMeshA) {
-      this.capMeshA.position.copy(P0);
-      this.capMeshA.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-      this.capMeshA.visible = true;
-    }
-    if (this.capMeshB) {
-      this.capMeshB.position.copy(P0);
-      this.capMeshB.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
-      this.capMeshB.visible = isBivalve;
     }
 
     // Update 3D holographic resection disc
@@ -1312,7 +1282,15 @@ class AcuCalyxViewer3D {
 
   setLayerVisibility(organKey, visible) {
     this._layerVisibility[organKey] = visible;
-    const SLICEABLE_ORGANS = ['kidney', 'capsule', 'pyramids', 'collecting', 'arteries', 'veins', 'nerves'];
+    const SLICEABLE_ORGANS = [
+      'kidney', 'renal_capsule', 'capsule',
+      'medulla_pyramids', 'pyramids',
+      'collecting_system', 'collecting',
+      'renal_arteries', 'arteries',
+      'renal_veins', 'veins',
+      'renal_nerves', 'nerves',
+      'renal_sinus_fat'
+    ];
     if (this.meshes[organKey]) {
       this.meshes[organKey].visible = (this.slicingState && this.slicingState.enabled && SLICEABLE_ORGANS.includes(organKey)) ? false : visible;
     }

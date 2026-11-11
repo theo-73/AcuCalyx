@@ -112,9 +112,10 @@ class AnatomicalKidneyBuilder:
     def build_renal_capsule(self) -> trimesh.Trimesh:
         """
         Builds the smooth, dark mahogany fibrous renal capsule as a continuous outer hull
-        with an open hilum portal for the renal pedicle vessels.
+        enveloping the renal parenchyma, using continuous Signed Distance Field (SDF)
+        marching cubes to guarantee zero staircased terraces and zero step-function cliffs.
         """
-        res = 1.0
+        res = 0.65
         x_range = np.arange(self.center[0] - 28.0, self.center[0] + 32.0, res)
         y_range = np.arange(self.center[1] - 24.0, self.center[1] + 28.0, res)
         z_range = np.arange(self.center[2] - 54.0, self.center[2] + 54.0, res)
@@ -124,92 +125,88 @@ class AnatomicalKidneyBuilder:
         dy = Y - self.center[1]
         dz = Z - self.center[2]
 
-        hilum_depth = 8.5
-        hilum_factor = hilum_depth * np.exp(-((dz / 16.0) ** 2 + (dy / 10.0) ** 2))
-        dx_adj = np.where(dx < 0, dx + hilum_factor, dx)
+        # C-infinity smooth hilum indentation function (smooth logistic blend, zero cliffs)
+        w_medial = 1.0 / (1.0 + np.exp((dx + 2.0) / 3.2))
+        hilum_depth = 6.8
+        hilum_factor = hilum_depth * np.exp(-((dz / 16.0) ** 2 + ((dy - 1.0) / 10.0) ** 2)) * w_medial
+        dx_smooth = dx + hilum_factor
 
-        dist_outer = (dx_adj / (self.rx + 1.2)) ** 2 + (dy / (self.ry + 1.2)) ** 2 + (dz / (self.rz + 1.2)) ** 2
-        dist_inner = (dx_adj / self.rx) ** 2 + (dy / self.ry) ** 2 + (dz / self.rz) ** 2
+        # Capsule is outer fibrous envelope (+0.8 mm)
+        cap_rx, cap_ry, cap_rz = self.rx + 0.8, self.ry + 0.8, self.rz + 0.8
+        sdf = np.sqrt((dx_smooth / cap_rx) ** 2 + (dy / cap_ry) ** 2 + (dz / cap_rz) ** 2) - 1.0
 
-        # Hilum portal opening where vascular pedicle and ureter exit
-        hilum_aperture = (dx < -4.0) & (((dz / 16.0) ** 2 + (dy / 11.0) ** 2) <= 1.0)
-
-        capsule_mask = (dist_outer <= 1.0) & (dist_inner >= 0.88) & ~hilum_aperture
-
-        # Pad mask by 1 voxel to guarantee closed watertight envelope
-        padded_capsule = np.pad(capsule_mask, 1, mode='constant', constant_values=0)
-        verts, faces, normals, _ = marching_cubes(padded_capsule, level=0.5, spacing=(res, res, res))
+        padded = np.pad(sdf, 1, mode='constant', constant_values=1.0)
+        verts, faces, normals, _ = marching_cubes(padded, level=0.0, spacing=(res, res, res))
         phys_verts = np.zeros_like(verts)
-        phys_verts[:, 0] = x_range[0] + (verts[:, 0] - 1.0) * res
-        phys_verts[:, 1] = y_range[0] + (verts[:, 1] - 1.0) * res
-        phys_verts[:, 2] = z_range[0] + (verts[:, 2] - 1.0) * res
+        phys_verts[:, 0] = (x_range[0] - res) + verts[:, 0]
+        phys_verts[:, 1] = (y_range[0] - res) + verts[:, 1]
+        phys_verts[:, 2] = (z_range[0] - res) + verts[:, 2]
 
-        # Standard CCW winding and volume-preserving Taubin smoothing (no shrinkage)
-        faces_ccw = faces[:, ::-1] if len(faces) > 0 else faces
-        normals_outward = -normals if len(normals) > 0 else normals
-        mesh = trimesh.Trimesh(vertices=phys_verts, faces=faces_ccw, vertex_normals=normals_outward, process=True)
+        mesh = trimesh.Trimesh(vertices=phys_verts, faces=faces, vertex_normals=normals, process=True)
         mesh.fix_normals()
-        if len(mesh.faces) > 0:
-            trimesh.smoothing.filter_taubin(mesh, lamb=0.5, nu=0.5128, iterations=8)
+        if mesh.volume < 0:
+            mesh.faces = mesh.faces[:, ::-1]
+            mesh.fix_normals()
 
-        # Retain primary continuous anatomical hull and filter any micro-debris < 5 mm3
+        if len(mesh.faces) > 0:
+            trimesh.smoothing.filter_taubin(mesh, lamb=0.5, nu=0.5128, iterations=10)
+
         parts = trimesh.graph.split(mesh)
         if len(parts) > 1:
             mesh = max(parts, key=lambda p: len(p.faces))
 
-        # Color: Dark reddish-brown fibrous capsule
         color = [115, 35, 25, 220]  # RGBA
         mesh.visual.vertex_colors = np.full((len(mesh.vertices), 4), color, dtype=np.uint8)
         return mesh
 
     def build_kidney_cortex(self, cutaway: bool = False) -> trimesh.Trimesh:
         """
-        Builds the granular pinkish-tan renal cortex with renal columns of Bertin dipping between pyramids.
+        Builds the smooth, organic renal cortex parenchyma using continuous Signed Distance Field (SDF)
+        marching cubes, guaranteeing zero staircased terraces and zero step-function cliffs.
         """
-        res = 1.0
-        x_range = np.arange(self.center[0] - 25.0, self.center[0] + 30.0, res)
-        y_range = np.arange(self.center[1] - 22.0, self.center[1] + 25.0, res)
-        z_range = np.arange(self.center[2] - 50.0, self.center[2] + 50.0, res)
+        res = 0.65
+        x_range = np.arange(self.center[0] - 28.0, self.center[0] + 32.0, res)
+        y_range = np.arange(self.center[1] - 24.0, self.center[1] + 28.0, res)
+        z_range = np.arange(self.center[2] - 54.0, self.center[2] + 54.0, res)
 
         X, Y, Z = np.meshgrid(x_range, y_range, z_range, indexing='ij')
         dx = X - self.center[0]
         dy = Y - self.center[1]
         dz = Z - self.center[2]
 
-        hilum_depth = 8.5
-        hilum_factor = hilum_depth * np.exp(-((dz / 16.0) ** 2 + (dy / 10.0) ** 2))
-        dx_adj = np.where(dx < 0, dx + hilum_factor, dx)
+        # C-infinity smooth hilum indentation function (smooth logistic blend, zero cliffs)
+        w_medial = 1.0 / (1.0 + np.exp((dx + 2.0) / 3.2))
+        hilum_depth = 6.8
+        hilum_factor = hilum_depth * np.exp(-((dz / 16.0) ** 2 + ((dy - 1.0) / 10.0) ** 2)) * w_medial
+        dx_smooth = dx + hilum_factor
 
-        dist_outer = (dx_adj / self.rx) ** 2 + (dy / self.ry) ** 2 + (dz / self.rz) ** 2
+        # Subtle organic lobulation (smooth C-infinity harmonics)
+        lobulation = 0.012 * np.sin(2.5 * dz / 14.0) * np.cos(2.5 * dy / 11.0)
+        sdf = np.sqrt((dx_smooth / self.rx) ** 2 + (dy / self.ry) ** 2 + (dz / self.rz) ** 2) + lobulation - 1.0
 
-        # Subtle physiological fetal lobulations for authentic organic realism (rather than a smooth plastic egg)
-        lobulation = 0.022 * np.sin(3.0 * dz / 14.0) * np.cos(3.0 * dy / 11.0)
-        cortex_mask = ((dist_outer + lobulation) <= 1.0)
-
-        # Coronal cutaway: reveals internal sinus and pyramids
         if cutaway:
-            cortex_mask = cortex_mask & (dy >= -1.0)
+            sdf = np.maximum(sdf, -(dy + 1.0) / self.ry)
 
-        # Pad mask by 1 voxel to ensure closed watertight manifold
-        padded_cortex = np.pad(cortex_mask, 1, mode='constant', constant_values=0)
-        verts, faces, normals, _ = marching_cubes(padded_cortex, level=0.5, spacing=(res, res, res))
+        padded = np.pad(sdf, 1, mode='constant', constant_values=1.0)
+        verts, faces, normals, _ = marching_cubes(padded, level=0.0, spacing=(res, res, res))
         phys_verts = np.zeros_like(verts)
-        phys_verts[:, 0] = x_range[0] + (verts[:, 0] - 1.0) * res
-        phys_verts[:, 1] = y_range[0] + (verts[:, 1] - 1.0) * res
-        phys_verts[:, 2] = z_range[0] + (verts[:, 2] - 1.0) * res
+        phys_verts[:, 0] = (x_range[0] - res) + verts[:, 0]
+        phys_verts[:, 1] = (y_range[0] - res) + verts[:, 1]
+        phys_verts[:, 2] = (z_range[0] - res) + verts[:, 2]
 
-        faces_ccw = faces[:, ::-1] if len(faces) > 0 else faces
-        normals_outward = -normals if len(normals) > 0 else normals
-        mesh = trimesh.Trimesh(vertices=phys_verts, faces=faces_ccw, vertex_normals=normals_outward, process=True)
+        mesh = trimesh.Trimesh(vertices=phys_verts, faces=faces, vertex_normals=normals, process=True)
         mesh.fix_normals()
-        if len(mesh.faces) > 0:
-            trimesh.smoothing.filter_taubin(mesh, lamb=0.5, nu=0.5128, iterations=8)
-            try:
-                mesh = mesh.simplify_quadric_decimation(16000)
-            except Exception:
-                pass
+        if mesh.volume < 0:
+            mesh.faces = mesh.faces[:, ::-1]
+            mesh.fix_normals()
 
-        # Color: Solid deep cortical crimson
+        if len(mesh.faces) > 0:
+            trimesh.smoothing.filter_taubin(mesh, lamb=0.5, nu=0.5128, iterations=10)
+
+        parts = trimesh.graph.split(mesh)
+        if len(parts) > 1:
+            mesh = max(parts, key=lambda p: len(p.faces))
+
         color = [139, 30, 30, 255]  # RGBA
         mesh.visual.vertex_colors = np.full((len(mesh.vertices), 4), color, dtype=np.uint8)
         return mesh

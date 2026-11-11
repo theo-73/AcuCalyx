@@ -343,9 +343,7 @@
       btn.textContent = `⏳ Planning (${plannedSide.toUpperCase()})...`;
       btn.disabled = true;
 
-      const allowFallback = options.allow_fallback_segmentation !== undefined
-        ? options.allow_fallback_segmentation
-        : (document.getElementById('check-fallback-segmentation')?.checked || false);
+      const allowFallback = Boolean(options.allow_fallback_segmentation);
 
       try {
         const res = await fetch(`/api/cases/${currentCaseId}/plan`, {
@@ -3063,23 +3061,19 @@
       if (!viewer3d) return;
       document.querySelectorAll('.slice-preset-btn').forEach(b => b.classList.remove('active'));
 
+      // Keep preset selector dropdown in sync
+      const sel = document.getElementById('slice-preset-select');
+      if (sel && sel.value !== preset) sel.value = preset;
+
       let params = { enabled: true };
       if (preset === 'brodel') {
         params = { enabled: true, mode: 'bivalve', angleYaw: 30, anglePitch: 0, offsetMm: 0, separationMm: 25 };
-        const btn = document.getElementById('btn-preset-brodel');
-        if (btn) btn.classList.add('active');
       } else if (preset === 'coronal') {
         params = { enabled: true, mode: 'bivalve', angleYaw: 0, anglePitch: 0, offsetMm: 0, separationMm: 25 };
-        const btn = document.getElementById('btn-plane-coronal');
-        if (btn) btn.classList.add('active');
       } else if (preset === 'axial') {
         params = { enabled: true, mode: 'bivalve', angleYaw: 0, anglePitch: 90, offsetMm: 0, separationMm: 25 };
-        const btn = document.getElementById('btn-plane-axial');
-        if (btn) btn.classList.add('active');
       } else if (preset === 'sagittal') {
         params = { enabled: true, mode: 'bivalve', angleYaw: 90, anglePitch: 0, offsetMm: 0, separationMm: 25 };
-        const btn = document.getElementById('btn-plane-sagittal');
-        if (btn) btn.classList.add('active');
       }
       viewer3d.setSlicingParameters(params);
     }

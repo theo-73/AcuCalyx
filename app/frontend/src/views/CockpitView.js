@@ -34,7 +34,7 @@ export class CockpitView {
   }
 
   async loadEndoscopyData(caseId, candidateId) {
-    const tbody = document.getElementById('endoscopy-calyces-tbody');
+    const tbody = document.getElementById('endo-reach-tbody');
     if (!tbody) return;
 
     try {
@@ -55,19 +55,39 @@ export class CockpitView {
 
       if (calycesList && calycesList.length > 0) {
         tbody.innerHTML = calycesList.map(r => `
-          <tr>
-            <td><strong>${r.calyx_name}</strong></td>
-            <td>${typeof r.deflection_deg === 'number' ? r.deflection_deg.toFixed(1) : r.deflection_deg}°</td>
-            <td><span class="strain-tag strain-${(r.strain || 'LOW').toLowerCase().replace(/[^a-z]/g, '')}">${r.strain || 'LOW'}</span></td>
-            <td><span class="reach-tag ${r.is_reachable ? 'reach-yes' : 'reach-no'}">${r.is_reachable ? 'REACHABLE' : ' BLOCKED'}</span></td>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 6px 8px;"><strong>${r.calyx_name}</strong></td>
+            <td style="padding: 6px 8px;">${typeof r.deflection_deg === 'number' ? r.deflection_deg.toFixed(1) : r.deflection_deg}°</td>
+            <td style="padding: 6px 8px;"><span class="strain-tag strain-${(r.strain || 'LOW').toLowerCase().replace(/[^a-z]/g, '')}">${r.strain || 'LOW'}</span></td>
+            <td style="padding: 6px 8px;"><span class="reach-tag ${r.is_reachable ? 'reach-yes' : 'reach-no'}">${r.is_reachable ? 'REACHABLE' : ' BLOCKED'}</span></td>
           </tr>
         `).join('');
       }
 
-      const riskEl = document.getElementById('endoscopy-residual-risk');
+      // Synchronize modal KPIs and residual risk metrics
+      const riskEl = document.getElementById('endo-stone-cov-pct');
       if (riskEl && coverage) {
-        const riskPct = coverage.residual_fragment_risk_pct ?? coverage.residual_risk_pct ?? 0.0;
-        riskEl.textContent = `${Number(riskPct).toFixed(1)}%`;
+        const covPct = coverage.total_coverage_fraction != null ? (coverage.total_coverage_fraction * 100) : null;
+        if (covPct != null) {
+          riskEl.textContent = `${covPct.toFixed(1)}%`;
+        } else {
+          const riskPct = coverage.residual_fragment_risk_pct ?? coverage.residual_risk_pct ?? 0.0;
+          riskEl.textContent = `${Number(riskPct).toFixed(1)}%`;
+        }
+      }
+
+      const covKpi = document.getElementById('endo-kpi-coverage');
+      if (covKpi && reach?.collecting_system_coverage_pct != null) {
+        covKpi.textContent = `${reach.collecting_system_coverage_pct.toFixed(0)}%`;
+      }
+      const marginKpi = document.getElementById('endo-kpi-margin');
+      if (marginKpi && reach?.min_deflection_margin_deg != null) {
+        marginKpi.textContent = `+${reach.min_deflection_margin_deg.toFixed(1)}°`;
+      }
+      const secKpi = document.getElementById('endo-kpi-secondary');
+      if (secKpi && reach?.requires_secondary_puncture != null) {
+        secKpi.textContent = reach.requires_secondary_puncture ? 'SECONDARY NEEDED' : 'NOT REQUIRED';
+        secKpi.style.color = reach.requires_secondary_puncture ? '#f59e0b' : '#10b981';
       }
     } catch (e) {
       console.warn('Endoscopy data error:', e);

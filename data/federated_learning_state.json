@@ -1,16 +1,16 @@
 {
-  "current_round": 35,
-  "cumulative_epsilon_spent": 6.179999999999998,
+  "current_round": 44,
+  "cumulative_epsilon_spent": 7.799999999999995,
   "global_weights": [
-    -0.5281973760204357,
-    0.8565494830297394,
-    0.9632978378556817,
-    -0.5557137309992708,
-    0.4005798739483871,
-    0.748466470661822,
-    0.6416936268665622
+    -0.5530269173558426,
+    0.8905255567649755,
+    0.9135193783648531,
+    -0.58693792854961,
+    0.38714123401741507,
+    0.7608847657730391,
+    0.6158119986094438
   ],
-  "global_bias": -0.043008212423730804,
+  "global_bias": -0.012708520448893104,
   "audit_log": [
     {
       "audit_id": "DP_AUDIT_2026_001",
@@ -487,117 +487,135 @@
       "delta": 1e-05,
       "status": "COMMITTED_DP_COMPLIANT",
       "privacy_proof_hash": "023287aa2c14d0f0"
+    },
+    {
+      "audit_id": "DP_AUDIT_20261110_083851",
+      "timestamp": "2026-11-10T08:38:51.110188+00:00",
+      "doctor_id": "DOC_MARCUS_RAMIREZ",
+      "doctor_name": "Dr. Marcus Ramirez, MD",
+      "cases_trained": 8,
+      "l2_grad_norm_before_clip": 0.0159,
+      "l2_grad_norm_after_clip": 0.0159,
+      "noise_sigma": 1.45,
+      "epsilon_spent": 0.18,
+      "delta": 1e-05,
+      "status": "COMMITTED_DP_COMPLIANT",
+      "privacy_proof_hash": "42979a72e29f3888"
+    },
+    {
+      "audit_id": "DP_AUDIT_20261110_084746",
+      "timestamp": "2026-11-10T08:47:46.722057+00:00",
+      "doctor_id": "DOC_MARCUS_RAMIREZ",
+      "doctor_name": "Dr. Marcus Ramirez, MD",
+      "cases_trained": 8,
+      "l2_grad_norm_before_clip": 0.012,
+      "l2_grad_norm_after_clip": 0.012,
+      "noise_sigma": 1.45,
+      "epsilon_spent": 0.18,
+      "delta": 1e-05,
+      "status": "COMMITTED_DP_COMPLIANT",
+      "privacy_proof_hash": "e03a9c8821c54b9a"
+    },
+    {
+      "audit_id": "DP_AUDIT_20261111_050930",
+      "timestamp": "2026-11-11T05:09:30.882758+00:00",
+      "doctor_id": "DOC_MARCUS_RAMIREZ",
+      "doctor_name": "Dr. Marcus Ramirez, MD",
+      "cases_trained": 8,
+      "l2_grad_norm_before_clip": 0.009,
+      "l2_grad_norm_after_clip": 0.009,
+      "noise_sigma": 1.45,
+      "epsilon_spent": 0.18,
+      "delta": 1e-05,
+      "status": "COMMITTED_DP_COMPLIANT",
+      "privacy_proof_hash": "76da8b0550e28038"
+    },
+    {
+      "audit_id": "DP_AUDIT_20261111_053710",
+      "timestamp": "2026-11-11T05:37:10.882898+00:00",
+      "doctor_id": "DOC_MARCUS_RAMIREZ",
+      "doctor_name": "Dr. Marcus Ramirez, MD",
+      "cases_trained": 8,
+      "l2_grad_norm_before_clip": 0.011,
+      "l2_grad_norm_after_clip": 0.011,
+      "noise_sigma": 1.45,
+      "epsilon_spent": 0.18,
+      "delta": 1e-05,
+      "status": "COMMITTED_DP_COMPLIANT",
+      "privacy_proof_hash": "ae91ab760fdd1ef2"
+    },
+    {
+      "audit_id": "DP_AUDIT_20261111_054159",
+      "timestamp": "2026-11-11T05:41:59.402274+00:00",
+      "doctor_id": "DOC_MARCUS_RAMIREZ",
+      "doctor_name": "Dr. Marcus Ramirez, MD",
+      "cases_trained": 8,
+      "l2_grad_norm_before_clip": 0.0097,
+      "l2_grad_norm_after_clip": 0.0097,
+      "noise_sigma": 1.45,
+      "epsilon_spent": 0.18,
+      "delta": 1e-05,
+      "status": "COMMITTED_DP_COMPLIANT",
+      "privacy_proof_hash": "785fb11096ce0d17"
+    },
+    {
+      "audit_id": "DP_AUDIT_20261111_055016",
+      "timestamp": "2026-11-11T05:50:16.007493+00:00",
+      "doctor_id": "DOC_MARCUS_RAMIREZ",
+      "doctor_name": "Dr. Marcus Ramirez, MD",
+      "cases_trained": 8,
+      "l2_grad_norm_before_clip": 0.0116,
+      "l2_grad_norm_after_clip": 0.0116,
+      "noise_sigma": 1.45,
+      "epsilon_spent": 0.18,
+      "delta": 1e-05,
+      "status": "COMMITTED_DP_COMPLIANT",
+      "privacy_proof_hash": "9ead31fc08625f43"
+    },
+    {
+      "audit_id": "DP_AUDIT_20261111_061724",
+      "timestamp": "2026-11-11T06:17:24.615954+00:00",
+      "doctor_id": "DOC_MARCUS_RAMIREZ",
+      "doctor_name": "Dr. Marcus Ramirez, MD",
+      "cases_trained": 8,
+      "l2_grad_norm_before_clip": 0.0107,
+      "l2_grad_norm_after_clip": 0.0107,
+      "noise_sigma": 1.45,
+      "epsilon_spent": 0.18,
+      "delta": 1e-05,
+      "status": "COMMITTED_DP_COMPLIANT",
+      "privacy_proof_hash": "904b553ce02fb7ac"
+    },
+    {
+      "audit_id": "DP_AUDIT_20261111_062151",
+      "timestamp": "2026-11-11T06:21:51.215592+00:00",
+      "doctor_id": "DOC_MARCUS_RAMIREZ",
+      "doctor_name": "Dr. Marcus Ramirez, MD",
+      "cases_trained": 8,
+      "l2_grad_norm_before_clip": 0.0124,
+      "l2_grad_norm_after_clip": 0.0124,
+      "noise_sigma": 1.45,
+      "epsilon_spent": 0.18,
+      "delta": 1e-05,
+      "status": "COMMITTED_DP_COMPLIANT",
+      "privacy_proof_hash": "1ba540f1d21f74ab"
+    },
+    {
+      "audit_id": "DP_AUDIT_20261111_093245",
+      "timestamp": "2026-11-11T09:32:45.427328+00:00",
+      "doctor_id": "DOC_MARCUS_RAMIREZ",
+      "doctor_name": "Dr. Marcus Ramirez, MD",
+      "cases_trained": 8,
+      "l2_grad_norm_before_clip": 0.0098,
+      "l2_grad_norm_after_clip": 0.0098,
+      "noise_sigma": 1.45,
+      "epsilon_spent": 0.18,
+      "delta": 1e-05,
+      "status": "COMMITTED_DP_COMPLIANT",
+      "privacy_proof_hash": "7caccd811dd78a27"
     }
   ],
   "history": [
-    {
-      "round_id": 15,
-      "started_at": "2026-10-21T14:43:33.291697+00:00",
-      "completed_at": "2026-10-21T14:43:33.291703+00:00",
-      "participating_doctors": [
-        "DOC_ELENA_CHEN"
-      ],
-      "cases_aggregated": 8,
-      "mean_training_loss": 0.0018,
-      "consensus_accuracy": 99.4,
-      "total_epsilon_spent": 2.76
-    },
-    {
-      "round_id": 16,
-      "started_at": "2026-10-21T15:29:39.788318+00:00",
-      "completed_at": "2026-10-21T15:29:39.788322+00:00",
-      "participating_doctors": [
-        "DOC_ELENA_CHEN"
-      ],
-      "cases_aggregated": 8,
-      "mean_training_loss": 0.0015,
-      "consensus_accuracy": 99.4,
-      "total_epsilon_spent": 2.94
-    },
-    {
-      "round_id": 17,
-      "started_at": "2026-10-28T03:50:06.718941+00:00",
-      "completed_at": "2026-10-28T03:50:06.718950+00:00",
-      "participating_doctors": [
-        "DOC_MARCUS_RAMIREZ"
-      ],
-      "cases_aggregated": 8,
-      "mean_training_loss": 0.0024,
-      "consensus_accuracy": 99.4,
-      "total_epsilon_spent": 3.12
-    },
-    {
-      "round_id": 18,
-      "started_at": "2026-10-28T03:56:25.211689+00:00",
-      "completed_at": "2026-10-28T03:56:25.211691+00:00",
-      "participating_doctors": [
-        "DOC_MARCUS_RAMIREZ"
-      ],
-      "cases_aggregated": 8,
-      "mean_training_loss": 0.0007,
-      "consensus_accuracy": 99.4,
-      "total_epsilon_spent": 3.3
-    },
-    {
-      "round_id": 19,
-      "started_at": "2026-10-28T04:11:08.757853+00:00",
-      "completed_at": "2026-10-28T04:11:08.757858+00:00",
-      "participating_doctors": [
-        "DOC_MARCUS_RAMIREZ"
-      ],
-      "cases_aggregated": 8,
-      "mean_training_loss": 0.0017,
-      "consensus_accuracy": 99.4,
-      "total_epsilon_spent": 3.48
-    },
-    {
-      "round_id": 20,
-      "started_at": "2026-10-28T04:46:38.012185+00:00",
-      "completed_at": "2026-10-28T04:46:38.012188+00:00",
-      "participating_doctors": [
-        "DOC_MARCUS_RAMIREZ"
-      ],
-      "cases_aggregated": 8,
-      "mean_training_loss": 0.0011,
-      "consensus_accuracy": 99.4,
-      "total_epsilon_spent": 3.66
-    },
-    {
-      "round_id": 21,
-      "started_at": "2026-10-28T05:37:31.999044+00:00",
-      "completed_at": "2026-10-28T05:37:31.999046+00:00",
-      "participating_doctors": [
-        "DOC_MARCUS_RAMIREZ"
-      ],
-      "cases_aggregated": 8,
-      "mean_training_loss": 0.002,
-      "consensus_accuracy": 99.4,
-      "total_epsilon_spent": 3.84
-    },
-    {
-      "round_id": 22,
-      "started_at": "2026-10-28T05:53:14.195073+00:00",
-      "completed_at": "2026-10-28T05:53:14.195075+00:00",
-      "participating_doctors": [
-        "DOC_MARCUS_RAMIREZ"
-      ],
-      "cases_aggregated": 8,
-      "mean_training_loss": 0.0031,
-      "consensus_accuracy": 99.4,
-      "total_epsilon_spent": 4.02
-    },
-    {
-      "round_id": 23,
-      "started_at": "2026-10-28T06:15:47.661209+00:00",
-      "completed_at": "2026-10-28T06:15:47.661214+00:00",
-      "participating_doctors": [
-        "DOC_MARCUS_RAMIREZ"
-      ],
-      "cases_aggregated": 8,
-      "mean_training_loss": 0.0025,
-      "consensus_accuracy": 99.4,
-      "total_epsilon_spent": 4.2
-    },
     {
       "round_id": 24,
       "started_at": "2026-10-28T06:47:02.753663+00:00",
@@ -729,7 +747,115 @@
       "mean_training_loss": 0.0015,
       "consensus_accuracy": 99.4,
       "total_epsilon_spent": 6.18
+    },
+    {
+      "round_id": 35,
+      "started_at": "2026-11-10T08:38:51.110229+00:00",
+      "completed_at": "2026-11-10T08:38:51.110233+00:00",
+      "participating_doctors": [
+        "DOC_MARCUS_RAMIREZ"
+      ],
+      "cases_aggregated": 8,
+      "mean_training_loss": 0.0023,
+      "consensus_accuracy": 99.4,
+      "total_epsilon_spent": 6.36
+    },
+    {
+      "round_id": 36,
+      "started_at": "2026-11-10T08:47:46.722090+00:00",
+      "completed_at": "2026-11-10T08:47:46.722093+00:00",
+      "participating_doctors": [
+        "DOC_MARCUS_RAMIREZ"
+      ],
+      "cases_aggregated": 8,
+      "mean_training_loss": 0.0015,
+      "consensus_accuracy": 99.4,
+      "total_epsilon_spent": 6.54
+    },
+    {
+      "round_id": 37,
+      "started_at": "2026-11-11T05:09:30.882818+00:00",
+      "completed_at": "2026-11-11T05:09:30.882823+00:00",
+      "participating_doctors": [
+        "DOC_MARCUS_RAMIREZ"
+      ],
+      "cases_aggregated": 8,
+      "mean_training_loss": 0.001,
+      "consensus_accuracy": 99.4,
+      "total_epsilon_spent": 6.72
+    },
+    {
+      "round_id": 38,
+      "started_at": "2026-11-11T05:37:10.883000+00:00",
+      "completed_at": "2026-11-11T05:37:10.883009+00:00",
+      "participating_doctors": [
+        "DOC_MARCUS_RAMIREZ"
+      ],
+      "cases_aggregated": 8,
+      "mean_training_loss": 0.0013,
+      "consensus_accuracy": 99.4,
+      "total_epsilon_spent": 6.9
+    },
+    {
+      "round_id": 39,
+      "started_at": "2026-11-11T05:41:59.402352+00:00",
+      "completed_at": "2026-11-11T05:41:59.402356+00:00",
+      "participating_doctors": [
+        "DOC_MARCUS_RAMIREZ"
+      ],
+      "cases_aggregated": 8,
+      "mean_training_loss": 0.0011,
+      "consensus_accuracy": 99.4,
+      "total_epsilon_spent": 7.08
+    },
+    {
+      "round_id": 40,
+      "started_at": "2026-11-11T05:50:16.007663+00:00",
+      "completed_at": "2026-11-11T05:50:16.007679+00:00",
+      "participating_doctors": [
+        "DOC_MARCUS_RAMIREZ"
+      ],
+      "cases_aggregated": 8,
+      "mean_training_loss": 0.0015,
+      "consensus_accuracy": 99.4,
+      "total_epsilon_spent": 7.26
+    },
+    {
+      "round_id": 41,
+      "started_at": "2026-11-11T06:17:24.616003+00:00",
+      "completed_at": "2026-11-11T06:17:24.616007+00:00",
+      "participating_doctors": [
+        "DOC_MARCUS_RAMIREZ"
+      ],
+      "cases_aggregated": 8,
+      "mean_training_loss": 0.0013,
+      "consensus_accuracy": 99.4,
+      "total_epsilon_spent": 7.44
+    },
+    {
+      "round_id": 42,
+      "started_at": "2026-11-11T06:21:51.215706+00:00",
+      "completed_at": "2026-11-11T06:21:51.215718+00:00",
+      "participating_doctors": [
+        "DOC_MARCUS_RAMIREZ"
+      ],
+      "cases_aggregated": 8,
+      "mean_training_loss": 0.0015,
+      "consensus_accuracy": 99.4,
+      "total_epsilon_spent": 7.62
+    },
+    {
+      "round_id": 43,
+      "started_at": "2026-11-11T09:32:45.427433+00:00",
+      "completed_at": "2026-11-11T09:32:45.427445+00:00",
+      "participating_doctors": [
+        "DOC_MARCUS_RAMIREZ"
+      ],
+      "cases_aggregated": 8,
+      "mean_training_loss": 0.0011,
+      "consensus_accuracy": 99.4,
+      "total_epsilon_spent": 7.8
     }
   ],
-  "last_updated": "2026-11-10T04:40:12.084546+00:00"
+  "last_updated": "2026-11-11T09:32:45.429211+00:00"
 }

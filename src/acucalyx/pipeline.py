@@ -440,6 +440,18 @@ def run_planning_pipeline(
         if np.all(volume_hu == 0):
             reasons.append("Empty volume detected: all voxels are 0 HU")
 
+        # Check coordinate axis orthogonality (shear / oblique gantry)
+        if spatial.direction is not None and hasattr(spatial.direction, "shape") and spatial.direction.shape == (3, 3):
+            c0 = spatial.direction[:, 0]
+            c1 = spatial.direction[:, 1]
+            c2 = spatial.direction[:, 2]
+            dot_xy = abs(float(np.dot(c0, c1)))
+            dot_xz = abs(float(np.dot(c0, c2)))
+            dot_yz = abs(float(np.dot(c1, c2)))
+            max_non_ortho = max(dot_xy, dot_xz, dot_yz)
+            if max_non_ortho > 0.05:
+                reasons.append(f"Non-orthogonal or sheared NIfTI coordinate axes detected (dot={max_non_ortho:.3f} > 0.05)")
+
         nifti_passed = len(reasons) == 0
         geom_score = 1.0 if nifti_passed else max(0.0, 1.0 - len(reasons) * 0.3)
         res_score = max(0.0, min(1.0, 1.25 / max(1.0, slice_th)))

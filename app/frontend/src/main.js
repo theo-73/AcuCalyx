@@ -122,6 +122,10 @@ class AcuCalyxApplication {
       const caseId = caseService.currentCaseId || window.currentCaseId;
       if (!candId) return;
 
+      window.selectedCandidateId = candId;
+      window.activeTrajectoryId = candId;
+      caseService.currentSelectedCandidateId = candId;
+
       // 1. Synchronize 3D WebGL viewport active needle trajectory
       if (window.viewer3d && typeof window.viewer3d.setActiveTrajectory === 'function') {
         window.viewer3d.setActiveTrajectory(candId);
@@ -141,7 +145,12 @@ class AcuCalyxApplication {
         window.updateKeyframePreview();
       }
 
-      // 3. Persist selection via backend service
+      // 3. Refresh live endoscopy reachability if cockpit view is active
+      if (this.views?.cockpit && caseId) {
+        this.views.cockpit.loadEndoscopyData(caseId, candId);
+      }
+
+      // 4. Persist selection via backend service
       if (caseId) {
         try {
           await caseService.selectTrajectory(caseId, candId);
