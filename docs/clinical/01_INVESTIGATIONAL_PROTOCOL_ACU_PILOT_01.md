@@ -145,7 +145,7 @@ Evaluated from post-access biplanar fluoroscopy before tract dilation:
 All adverse events occurring from skin puncture through Day 30 post-op are recorded:
 - **Grade I:** Minor deviations from normal post-op course (analgesics, antiemetics).
 - **Grade II:** Complications requiring pharmacological treatment (blood transfusion, IV antibiotics).
-- **Grade IIIa:** Surgical/radiological intervention without general anesthesia (percutaneous chest tube for pneumothorax, ureteral stent exchange, angioembolization under local anesthesia).
+- **Grade IIIa:** Surgical/radiological intervention without general anesthesia (percutaneous chest tube for pleural violation / hemothorax, ureteral stent exchange, angioembolization under local anesthesia).
 - **Grade IIIb:** Surgical intervention under general anesthesia (laparotomy/repair of colonic perforation, open surgical exploration).
 - **Grade IVa/b:** Life-threatening complication requiring ICU admission (single or multi-organ failure).
 - **Grade V:** Patient death.

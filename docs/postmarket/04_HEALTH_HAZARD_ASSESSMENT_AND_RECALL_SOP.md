@@ -35,7 +35,7 @@ When an anomaly is escalated from complaint handling or cybersecurity monitoring
 │ Severity Level (S)    │ Clinical Definition                                            │
 ├───────────────────────┼────────────────────────────────────────────────────────────────┤
 │ **Critical (S1)**     │ Potential patient death, bowel perforation, severe hemorrhage. │
-│ **Major (S2)**        │ Reversible injury, pleural puncture, pneumothorax, pain.       │
+│ **Major (S2)**        │ Reversible injury, pleural puncture, pleural tear, pain.       │
 │ **Minor (S3)**        │ Minor procedural delay, transient display glitch, re-aiming.   │
 ├───────────────────────┼────────────────────────────────────────────────────────────────┤
 │ Probability Level (P) │ Frequency / Likelihood in Clinical Field                       │

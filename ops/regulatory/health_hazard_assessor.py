@@ -14,7 +14,7 @@ from typing import Tuple
 class HazardSeverity(str, Enum):
     """Clinical severity of software defect under ISO 14971."""
     CRITICAL_S1 = "CRITICAL_S1"  # Potential death, visceral organ perforation, severe bleeding
-    MAJOR_S2 = "MAJOR_S2"        # Reversible injury, pneumothorax, minor pleural tear
+    MAJOR_S2 = "MAJOR_S2"        # Reversible injury, pleural violation, minor pleural tear
     MINOR_S3 = "MINOR_S3"        # Minor procedural delay, transient visualization artifact
 
 

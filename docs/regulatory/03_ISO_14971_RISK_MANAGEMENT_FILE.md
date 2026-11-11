@@ -27,7 +27,7 @@ In strict compliance with ISO 14971:2019:
 ### 2.1 Severity Levels (S1 to S5)
 - **S1 (Negligible):** Inconvenience, temporary discomfort, minor delay ($<5\text{ min}$) with no clinical consequence.
 - **S2 (Minor):** Superficial injury, minor bleed requiring no transfusion, procedural delay ($5\text{–}30\text{ min}$).
-- **S3 (Serious):** Injury requiring medical intervention (blood transfusion, auxiliary drainage, pneumothorax requiring chest tube).
+- **S3 (Serious):** Injury requiring medical intervention (blood transfusion, auxiliary drainage, pleural injury requiring chest tube).
 - **S4 (Critical):** Permanent impairment, life-threatening visceral laceration, colon perforation requiring laparotomy/colostomy, vascular injury requiring angioembolization.
 - **S5 (Catastrophic):** Patient death.
 
@@ -62,7 +62,7 @@ In strict compliance with ISO 14971:2019:
 | Hazard ID | Clinical Harm Description | Severity | Unmitigated Cause Sequence | Initial Risk | Implemented Risk Control | Mitigated Probability | Residual Risk | Verification Evidence |
 |---|---|---|---|---|---|---|---|---|
 | **HAZ-SURG-01** | **Colonic Perforation / Peritonitis** | **S4** | CT planning trajectory traverses retrorenal or lateral colon undetected $\rightarrow$ Surgeon executes transfixion $\rightarrow$ Sepsis/fecal fistula. | **P4 / S4 (Unaccept)** | **RC-01:** Mandatory $\ge 15.0\text{ mm}$ colon clearance buffer; distance field collision rejection; multi-view visualization. | **P1 (Extr Rare)** | **P1 / S4 (Acceptable with BR)** | Unit test `test_hazard_clearance_and_intersection` |
-| **HAZ-SURG-02** | **Pneumothorax / Hemothorax** | **S3** | Supracostal puncture penetrates pleural reflection above 12th rib $\rightarrow$ Lung collapse / thoracic bleeding $\rightarrow$ Chest tube placement. | **P4 / S3 (Unaccept)** | **RC-02:** Thoracic boundary distance field; preferential infracostal trajectory scoring; $\ge 10.0\text{ mm}$ pleural buffer. | **P2 (Remote)** | **P2 / S3 (Acceptable)** | Unit test `test_thoracic_and_intercostal_risk_models` |
+| **HAZ-SURG-02** | **Pleural Violation / Hemothorax** | **S3** | Supracostal puncture penetrates pleural reflection above 12th rib $\rightarrow$ Lung collapse / thoracic bleeding $\rightarrow$ Chest tube placement. | **P4 / S3 (Unaccept)** | **RC-02:** Thoracic boundary distance field; preferential infracostal trajectory scoring; $\ge 10.0\text{ mm}$ pleural buffer. | **P2 (Remote)** | **P2 / S3 (Acceptable)** | Unit test `test_thoracic_and_intercostal_risk_models` |
 | **HAZ-SURG-03** | **Segmental / Interlobar Vascular Tear** | **S4** | Puncture enters infundibular neck or renal pelvis non-coaxially $\rightarrow$ Lacerates segmental vessels $\rightarrow$ Massive hemorrhage. | **P4 / S4 (Unaccept)** | **RC-03:** Conical forniceal target alignment ($\le 20.0^\circ$ coaxial cone); parenchymal entry via papilla fornix only. | **P2 (Remote)** | **P2 / S4 (Acceptable with BR)** | Unit test `test_conical_puncture_zone_coaxial_validation` |
 | **HAZ-SURG-04** | **Medial Counter-Puncture / Great Vessel Laceration** | **S5** | Needle driven past target calyx through medial renal border into aorta/IVC $\rightarrow$ Exsanguinating hemorrhage / death. | **P3 / S5 (Unaccept)** | **RC-04 (Interlock U5):** Dynamic depth boundary check; medial boundary halt alarm within $5.0\text{ mm}$ of medial collecting system. | **P1 (Extr Rare)** | **P1 / S5 (Acceptable with BR)** | Unit test `test_interlock_u5_depth_boundary_and_counter_puncture_alarms` |
 | **HAZ-USE-01** | **Wrong-Side Puncture (Sentinel Event)** | **S4** | Misidentification of stone side during positioning $\rightarrow$ Puncture of healthy contralateral kidney $\rightarrow$ Organ damage. | **P3 / S4 (Unaccept)** | **RC-05 (Interlock U1):** Tri-modal laterality consensus gate (DICOM tag + segmented kidney centroid + surgeon verbal confirmation). | **P1 (Extr Rare)** | **P1 / S4 (Acceptable with BR)** | Unit test `test_interlock_u1_laterality_verification` |
@@ -154,7 +154,7 @@ to Detect Colon]      Independent Check]  to Alarm Depth]       Depth Verificati
 
 ### 6.1 Clinical Benefits
 1. **Increased Stone-Free Rate (SFR):** Precise coaxial forniceal puncture enables optimal rigid nephroscope reach, maximizing single-session staghorn clearance.
-2. **Elimination of Visceral Complications:** Computational 3D safety corridors actively steer trajectories away from retrorenal colon and pleural reflections, preventing catastrophic peritonitis and pneumothorax.
+2. **Elimination of Visceral Complications:** Computational 3D safety corridors actively steer trajectories away from retrorenal colon and pleural reflections, preventing catastrophic peritonitis and pleural violation.
 3. **Radiation Dose Reduction (ALARA):** Pre-calculated C-arm projection angles eliminate trial-and-error fluoroscopy search sweeps, substantially reducing ionizing radiation to patient and OR personnel.
 4. **Reduction in Counter-Punctures:** Depth boundary warnings prevent over-advancement through the medial collecting system into major renal and retroperitoneal vessels.
 

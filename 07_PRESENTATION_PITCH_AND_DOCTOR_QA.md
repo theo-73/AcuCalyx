@@ -130,7 +130,7 @@ If training alone eliminated error, complication rates at elite university hospi
 │ Blood transfusion needed (bleeding)   │ 7% to 18% of all cases  │ 1 in 6 patients loses enough blood to     │
 │                                       │                         │ require a donor blood transfusion.        │
 ├───────────────────────────────────────┼─────────────────────────┼───────────────────────────────────────────┤
-│ Pneumothorax (punctured lung)         │ 4% to 12% supracostal   │ The needle passes above the 11th rib and  │
+│ Pleural injury (punctured lung)       │ 4% to 12% supracostal   │ The needle passes above the 11th rib and  │
 │                                       │                         │ tears the pleura; requires chest tube.    │
 ├───────────────────────────────────────┼─────────────────────────┼───────────────────────────────────────────┤
 │ Failed primary calyx access           │ 5% to 15% of cases      │ The first puncture misses the target;     │

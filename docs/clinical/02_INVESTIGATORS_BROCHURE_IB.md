@@ -95,7 +95,7 @@ The pre-clinical safety, geometric accuracy, and usability of AcuCalyx Core have
 | Identified Risk | Clinical Potential | Built-in Mitigation / Safe Operating Practice |
 |---|---|---|
 | **Colonic Perforation** | Transfixion of retrorenal colon leading to peritonitis. | Automated $15.0\text{ mm}$ distance field buffer; visual inspection on multi-planar CT; surgeon confirmation under live fluoroscopy. |
-| **Pneumothorax** | Pleural violation during supracostal puncture. | Pleural distance field scoring; preferential infracostal trajectory ranking; mandatory $10.0\text{ mm}$ pleural clearance. |
+| **Pleural Violation** | Pleural violation during supracostal puncture. | Pleural distance field scoring; preferential infracostal trajectory ranking; mandatory $10.0\text{ mm}$ pleural clearance. |
 | **Vascular Laceration** | Non-coaxial entry tearing interlobar or arcuate vessels. | Target forniceal alignment cone ($\le 20.0^\circ$); entry restricted to papilla fornix. |
 | **Medial Counter-Puncture** | Driving needle through medial pelvis into great vessels. | Dynamic depth boundary display; real-time alarm within $5.0\text{ mm}$ of medial border; needle depth stop. |
 | **Laterality Error** | Puncturing contralateral healthy kidney. | Interlock U1 tri-modal gate requiring DICOM tag, segmented centroid, and surgeon verbal confirmation before planning. |

@@ -191,7 +191,7 @@ STANDARD_ANTHROPOMORPHIC_SPEC = AnthropomorphicPhantomSpec(
             acceptable_hu_range=(-850.0, -650.0),
             shore_hardness="Shore 15A",
             fabrication_method="Pre-formed insert mounted above 10th rib",
-            functional_purpose="Thoracic boundary to evaluate pneumothorax / hydrothorax risk on supracostal access"
+            functional_purpose="Thoracic boundary to evaluate pleural violation / hydrothorax risk on supracostal access"
         ),
         "fiducials": PhantomTissueLayer(
             name="fiducials",

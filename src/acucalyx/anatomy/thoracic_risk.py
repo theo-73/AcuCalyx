@@ -123,7 +123,7 @@ def evaluate_thoracic_access_risk(
     elif supracostal_level == "SUPRACOSTAL_11":
         advisory_parts.append(
             "Supracostal 10-11 access traverses diaphragm and costodiaphragmatic recess. "
-            "Pneumothorax/hydrothorax risk elevated (~5-12%); intraoperative fluoroscopy required."
+            "Pleural violation/hydrothorax risk elevated (~5-12%); intraoperative fluoroscopy required."
         )
     elif supracostal_level == "INTERCOSTAL_11_12":
         advisory_parts.append(

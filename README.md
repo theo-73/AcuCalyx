@@ -237,7 +237,6 @@ AcuCalyx includes an exhaustive, audit-ready Design History File (DHF) and regul
 * [**`03_RUTHLESS_COMPETITIVE_LANDSCAPE.md`**](./03_RUTHLESS_COMPETITIVE_LANDSCAPE.md): Commercial analysis of NDR Medical ANT-X, J&J MONARCH, Siemens syngo, Ceevra, and Avatar Medical.
 * [**`04_FEASIBILITY_SELF_AUDIT_SCORECARD.md`**](./04_FEASIBILITY_SELF_AUDIT_SCORECARD.md): 17-point verification matrix of all clinical, physical, and mathematical claims.
 * [**`05_DATA_MODELS_TRAINING_AND_TECH_STACK.md`**](./05_DATA_MODELS_TRAINING_AND_TECH_STACK.md): Implementation & ML roadmap, datasets (KiTS23, MSD, TCIA), and 3D Slicer protocols.
-* [**`06_PNEUMOTHORAX_VS_KIDNEYSTONE_COMPARISON.md`**](./06_PNEUMOTHORAX_VS_KIDNEYSTONE_COMPARISON.md): 7-dimension scoring table, reimbursement economics, and sequential execution roadmap.
 * [**`07_PRESENTATION_PITCH_AND_DOCTOR_QA.md`**](./07_PRESENTATION_PITCH_AND_DOCTOR_QA.md): 30-second pitch, clinical analogies, objection responses (*"Aren't doctors already trained for this?"*).
 * [**`08_COMPREHENSIVE_CHAT_RESEARCH_ARCHIVE.md`**](./08_COMPREHENSIVE_CHAT_RESEARCH_ARCHIVE.md): Complete chronological record of every research inquiry, derivation, and architectural milestone.
 
@@ -275,7 +274,6 @@ AcuCalyx/
 ├── 03_RUTHLESS_COMPETITIVE_LANDSCAPE.md
 ├── 04_FEASIBILITY_SELF_AUDIT_SCORECARD.md
 ├── 05_DATA_MODELS_TRAINING_AND_TECH_STACK.md
-├── 06_PNEUMOTHORAX_VS_KIDNEYSTONE_COMPARISON.md
 ├── 07_PRESENTATION_PITCH_AND_DOCTOR_QA.md
 ├── 08_COMPREHENSIVE_CHAT_RESEARCH_ARCHIVE.md
 ├── README.md                          # Master documentation and quick start

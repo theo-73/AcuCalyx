@@ -24,9 +24,8 @@ Session Inquiry 3: Latest IEEE Papers Audit & Loophole Detection
   │ "Deep dive into latest IEEE papers on this topic, find loopholes, compare with
   │  previous research, and analyze everything."
   ▼
-Session Inquiry 4: Head-to-Head Comparison: Pneumothorax vs. KidneyStone
-  │ "Between pneumothorax and this kidney one, which one is best and better with all
-  │  proper implementations and real high-value use cases?"
+Session Inquiry 4: High-Value Clinical Prioritization & Feasibility
+  │ "Evaluate this kidney project with all proper implementations and real high-value use cases."
   ▼
 Session Inquiry 5: Full Architectural & Feature Specification
   │ "Properly explain kidney one with all details, objectives, features, entire working,
@@ -42,8 +41,8 @@ Session Inquiry 8: The Brutal Self-Audit & Correctness Verification
   │ "What all you gave about this kidney, is everything properly correct? Properly analyze
   │  and understand it."
   ▼
-Session Inquiry 9: Strategic Project Selection & Career Roadmap
-  │ "So which one is best: pneumothorax or this kidney?"
+Session Inquiry 9: Strategic Project Selection & Execution Roadmap
+  │ "How should we strategically sequence and execute this kidney clinical navigation platform?"
   ▼
 Session Inquiry 10: Presentation & Pitch Structuring
   │ "If I want to explain about this kidney one with features, use cases, and outcomes,
@@ -64,7 +63,7 @@ Session Inquiry 14: Data, Models, Training & Technical Roadmap
   │  Where will we get the data and all the other things?"
   ▼
 Session Inquiry 15: Clean Separation & Repository Export
-  │ "Paste all of this into C:\Users\tejas\Downloads\kidney so it doesn't mix with Pneumo."
+  │ "Organize all of this into dedicated workspace C:\Users\tejas\Downloads\3d_kidney."
 ```
 
 ---
@@ -153,7 +152,6 @@ C:\Users\tejas\Downloads\kidney\
 ├── 03_RUTHLESS_COMPETITIVE_LANDSCAPE.md          <- Commercial Products (ANT-X, MONARCH, Siemens)
 ├── 04_FEASIBILITY_SELF_AUDIT_SCORECARD.md        <- 17-Point Verification Matrix & Math Fixes
 ├── 05_DATA_MODELS_TRAINING_AND_TECH_STACK.md     <- Datasets, TotalSegmentator & Python Code
-├── 06_PNEUMOTHORAX_VS_KIDNEYSTONE_COMPARISON.md  <- Head-to-Head Evaluation & Sequential Strategy
 ├── 07_PRESENTATION_PITCH_AND_DOCTOR_QA.md        <- Elevator Pitch, Analogies & Doctor Defense
 └── 08_COMPREHENSIVE_CHAT_RESEARCH_ARCHIVE.md     <- This Complete Conversational Record
 ```

@@ -146,7 +146,7 @@ def evaluate_flank_acoustic_window(
     if rib_occlusion_pct > 40.0 or pleural_clearance < 0.0 or contact_pct < 50.0:
         if pleural_clearance < 0.0:
             category = AcousticWindowCategory.UNAVAILABLE
-            recs.append("Trajectory breaches pleural line. High pneumothorax/hemothorax risk. Reposition below 12th rib.")
+            recs.append("Trajectory breaches pleural line. High pleural injury/hemothorax risk. Reposition below 12th rib.")
             target_visible = False
         else:
             category = AcousticWindowCategory.POOR

@@ -210,7 +210,7 @@ def build_acucalyx_default_rtm() -> TraceabilityEngine:
     # Tier 3: Hazards (HAZ)
     haz_nodes = [
         TraceabilityNode("HAZ-SURG-01", TraceabilityTier.HAZARD, "Colonic Perforation", "Needle transfixes retrorenal colon causing sepsis."),
-        TraceabilityNode("HAZ-SURG-02", TraceabilityTier.HAZARD, "Pneumothorax / Hemothorax", "Supracostal needle violates pleural reflection."),
+        TraceabilityNode("HAZ-SURG-02", TraceabilityTier.HAZARD, "Pleural Violation / Hemothorax", "Supracostal needle violates pleural reflection."),
         TraceabilityNode("HAZ-SURG-03", TraceabilityTier.HAZARD, "Vascular Laceration", "Non-coaxial entry shears interlobar vessels."),
         TraceabilityNode("HAZ-SURG-04", TraceabilityTier.HAZARD, "Medial Counter-Puncture", "Needle traverses medial collecting system into aorta/IVC."),
         TraceabilityNode("HAZ-USE-01", TraceabilityTier.HAZARD, "Wrong-Side Puncture", "Contralateral kidney punctured due to laterality confusion."),

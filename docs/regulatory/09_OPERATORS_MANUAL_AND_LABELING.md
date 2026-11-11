@@ -84,7 +84,7 @@ The device is intended exclusively for use by:
 > The software provides computer-assisted planning, multi-objective trajectory ranking, and virtual fluoroscopy simulation. It does **NOT** provide active intraoperative needle tracking, automated needle driving, or robotic guidance. The attending physician retains sole medical, surgical, and legal responsibility for verifying all anatomical boundaries, selecting the target calyx and puncture angle, and executing the puncture under continuous live real-time imaging (fluoroscopy or ultrasound).
 
 ### 6.2 Preoperative Virtual Rehearsal Warnings
-- **Pneumothorax Risk:** Intercostal access trajectories above the 11th rib carry documented risk of pleural violation. The surgeon must verify diaphragm position on inspiratory/expiratory fluoroscopy.
+- **Pleural Violation Risk:** Intercostal access trajectories above the 11th rib carry documented risk of pleural violation. The surgeon must verify diaphragm position on inspiratory/expiratory fluoroscopy.
 - **Colon Perforation:** Trajectories with posterior retrorenal colon proximity $< 5.0\text{ mm}$ are flagged with critical red interlocks. The surgeon must verify absence of bowel along the proposed corridor.
 - **Surgical Position Transform:** AcuCalyx supports prone and supine positions. Trajectory calculations derived from supine CT must be verified for renal displacement if the patient is positioned prone.
 

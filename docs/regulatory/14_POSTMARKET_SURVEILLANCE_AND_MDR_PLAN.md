@@ -42,7 +42,7 @@ Any customer complaint or clinical event alleging that AcuCalyx Core may have ca
 
 ### 2.2 Clinical Event Adjudication Flow
 - **Intake:** Automated complaint intake logging via Quality Management System.
-- **Triage:** Clinical Specialist and Safety Officer assess whether the event involved organ perforation (colon, spleen, vascular), pneumothorax, or severe bleeding.
+- **Triage:** Clinical Specialist and Safety Officer assess whether the event involved organ perforation (colon, spleen, vascular), pleural injury, or severe bleeding.
 - **Technical Investigation:** Engineering retrieves the cryptographic `ClinicalSourceRecord` and audits whether the plan was followed or if a software calculation error occurred.
 
 ---

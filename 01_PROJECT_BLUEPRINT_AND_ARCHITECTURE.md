@@ -14,7 +14,7 @@ In PCNL, a surgeon must pass an 18-gauge needle from the patient's flank through
   * **15% to 30%** of complex cases require multiple puncture tracts (*multi-tract PCNL*), doubling kidney parenchymal injury, doubling blood loss, and doubling hospital stay.
   * **5% to 15%** of primary punctures fail to enter the targeted calyx, requiring repeated blind needle passes.
   * **2% to 5%** of patients have a *retrorenal colon* (bowel sitting behind the kidney). A blind puncture pierces the large intestine, causing fecal contamination, peritonitis, septic shock, and emergency colostomy.
-  * **15% to 25%** of upper-pole stones require a puncture above the 11th or 12th rib, causing a **4% to 12% rate of pneumothorax** (punctured, collapsed lung).
+  * **15% to 25%** of upper-pole stones require a puncture above the 11th or 12th rib, causing a **4% to 12% rate of pleural injury / violation** (punctured, collapsed lung).
 
 ### What KidneyStone 3D Delivers:
 An automated, pure-software computational geometry platform that:
@@ -123,7 +123,7 @@ A CT scan is 300–500 separate 2D axial images spaced 1 mm apart. Asking a surg
 ### 4. The Published Complication Rates Prove the Need
 If training alone eliminated the problem, these complication numbers from top academic medical centers would be zero:
 * **7% to 18%** of PCNL patients require blood transfusions due to inadvertent vascular laceration.
-* **4% to 12%** of supra-costal punctures cause pneumothorax or hydrothorax.
+* **4% to 12%** of supra-costal punctures cause pleural injury or hydrothorax.
 * **0.2% to 0.5%** experience colonic perforation (200–500 cases/year in the US alone).
 * **5% to 15%** of primary calyx punctures miss on the first attempt.
 These numbers occur in the hands of experienced, fellowship-trained urologists. The software is designed to bridge this exact gap.
