@@ -51,6 +51,8 @@ class AcuCalyxViewer3D {
     this.planeB = null;
     this.sliceGizmo = null;
     this._layerVisibility = {};
+    this.isAnimating = false;
+    this.animFrameId = null;
 
     this.init();
   }
@@ -199,11 +201,51 @@ class AcuCalyxViewer3D {
     }
     this.renderer.domElement.addEventListener('pointerdown', (e) => this.onPointerDown(e));
 
-    // Animation Loop
-    this.animate();
+    // Visibility-aware Animation Loop lifecycle
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          this.pauseAnimation();
+        } else if (this.container && this.container.offsetParent !== null && this.container.clientWidth > 0) {
+          this.resumeAnimation();
+        }
+      });
+    }
+
+    this.resumeAnimation();
+  }
+
+  resumeAnimation() {
+    if (!this.isAnimating) {
+      this.isAnimating = true;
+      this.animate();
+    }
+  }
+
+  pauseAnimation() {
+    this.isAnimating = false;
+    if (this.animFrameId) {
+      cancelAnimationFrame(this.animFrameId);
+      this.animFrameId = null;
+    }
   }
 
   animate() {
+    if (!this.isAnimating) return;
+
+    // Visibility and DOM attachment guard: pause if container is hidden or invisible
+    if (
+      !this.container ||
+      this.container.clientWidth === 0 ||
+      this.container.clientHeight === 0 ||
+      this.container.offsetParent === null ||
+      (typeof document !== 'undefined' && document.hidden)
+    ) {
+      this.isAnimating = false;
+      this.animFrameId = null;
+      return;
+    }
+
     this.animFrameId = requestAnimationFrame(() => this.animate());
     if (this.controls) this.controls.update();
     this.renderer.render(this.scene, this.camera);
@@ -215,7 +257,10 @@ class AcuCalyxViewer3D {
   onWindowResize() {
     const width = this.container.clientWidth;
     const height = this.container.clientHeight;
-    if (width <= 0 || height <= 0) return;
+    if (width <= 0 || height <= 0) {
+      this.pauseAnimation();
+      return;
+    }
 
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
@@ -223,6 +268,7 @@ class AcuCalyxViewer3D {
     if (this.labelRenderer) {
       this.labelRenderer.setSize(width, height);
     }
+    this.resumeAnimation();
   }
 
   /**

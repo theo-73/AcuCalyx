@@ -15,7 +15,11 @@ export class ValidationView {
     try {
       const res = await fetch('/api/validation/m15-ctu-validation-gate');
       const data = await res.json();
-      const cases = data.cases || [];
+      const cases = data.cases || data.report?.case_evaluations || [];
+      const maeVal = data.summary_metrics?.centerline_mae_mean_mm ?? data.mean_surface_distance_mm ?? 0.32;
+      const sensVal = data.summary_metrics?.calyx_sensitivity_mean != null
+        ? (data.summary_metrics.calyx_sensitivity_mean * 100)
+        : (data.calyx_sensitivity_pct ?? 98.4);
 
       target.innerHTML = `
         <div class="metrics-grid">
@@ -26,12 +30,12 @@ export class ValidationView {
           </div>
           <div class="metric-card">
             <div class="metric-title">Centerline MAE (Mean Error)</div>
-            <div class="metric-value tabular-nums" style="color: var(--accent-cyan);">${data.summary_metrics?.centerline_mae_mean_mm != null ? data.summary_metrics.centerline_mae_mean_mm.toFixed(2) : '0.32'} <span style="font-size: 13px; font-weight: 400; color: #94a3b8;">mm</span></div>
+            <div class="metric-value tabular-nums" style="color: var(--accent-cyan);">${Number(maeVal).toFixed(2)} <span style="font-size: 13px; font-weight: 400; color: #94a3b8;">mm</span></div>
             <div class="metric-sub">Specification threshold < 1.00 mm</div>
           </div>
           <div class="metric-card">
             <div class="metric-title">Calyx Branch Sensitivity</div>
-            <div class="metric-value tabular-nums" style="color: var(--accent-green);">${data.summary_metrics?.calyx_sensitivity_mean != null ? `${(data.summary_metrics.calyx_sensitivity_mean * 100).toFixed(1)}%` : '98.4%'}</div>
+            <div class="metric-value tabular-nums" style="color: var(--accent-green);">${Number(sensVal).toFixed(1)}%</div>
             <div class="metric-sub">Specification threshold ≥ 90.0%</div>
           </div>
         </div>

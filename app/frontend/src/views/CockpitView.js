@@ -12,10 +12,15 @@ export class CockpitView {
   }
 
   mount() {
-    // Force Three.js renderer resize when viewport becomes visible
+    // Force Three.js renderer resize and resume animation when viewport becomes visible
     setTimeout(() => {
-      if (window.viewer3d && typeof window.viewer3d.onWindowResize === 'function') {
-        window.viewer3d.onWindowResize();
+      if (window.viewer3d) {
+        if (typeof window.viewer3d.onWindowResize === 'function') {
+          window.viewer3d.onWindowResize();
+        }
+        if (typeof window.viewer3d.resumeAnimation === 'function') {
+          window.viewer3d.resumeAnimation();
+        }
       }
       if (window.layoutManager && typeof window.layoutManager.triggerViewerResize === 'function') {
         window.layoutManager.triggerViewerResize();
@@ -67,9 +72,9 @@ export class CockpitView {
       // Synchronize modal KPIs and residual risk metrics
       const riskEl = document.getElementById('endo-stone-cov-pct');
       if (riskEl && coverage) {
-        const covPct = coverage.total_coverage_fraction != null ? (coverage.total_coverage_fraction * 100) : null;
+        const covPct = coverage.geometric_coverage_estimate_percent ?? (coverage.total_coverage_fraction != null ? coverage.total_coverage_fraction * 100 : null);
         if (covPct != null) {
-          riskEl.textContent = `${covPct.toFixed(1)}%`;
+          riskEl.textContent = `${Number(covPct).toFixed(1)}%`;
         } else {
           const riskPct = coverage.residual_fragment_risk_pct ?? coverage.residual_risk_pct ?? 0.0;
           riskEl.textContent = `${Number(riskPct).toFixed(1)}%`;
@@ -77,17 +82,34 @@ export class CockpitView {
       }
 
       const covKpi = document.getElementById('endo-kpi-coverage');
-      if (covKpi && reach?.collecting_system_coverage_pct != null) {
-        covKpi.textContent = `${reach.collecting_system_coverage_pct.toFixed(0)}%`;
+      if (covKpi && reach) {
+        const covVal = reach.overall_reachability_fraction != null
+          ? (reach.overall_reachability_fraction * 100)
+          : reach.collecting_system_coverage_pct;
+        if (covVal != null) {
+          covKpi.textContent = `${Number(covVal).toFixed(0)}%`;
+        }
       }
       const marginKpi = document.getElementById('endo-kpi-margin');
-      if (marginKpi && reach?.min_deflection_margin_deg != null) {
-        marginKpi.textContent = `+${reach.min_deflection_margin_deg.toFixed(1)}°`;
+      if (marginKpi && reach) {
+        let margin = reach.min_deflection_margin_deg;
+        if (margin == null && reach.calyces) {
+          const vals = Object.values(reach.calyces).map(c => c.deflection_clearance_deg).filter(v => v != null);
+          if (vals.length > 0) margin = Math.min(...vals);
+        }
+        if (margin != null && margin < 900) {
+          marginKpi.textContent = `+${Number(margin).toFixed(1)}°`;
+        }
       }
       const secKpi = document.getElementById('endo-kpi-secondary');
-      if (secKpi && reach?.requires_secondary_puncture != null) {
-        secKpi.textContent = reach.requires_secondary_puncture ? 'SECONDARY NEEDED' : 'NOT REQUIRED';
-        secKpi.style.color = reach.requires_secondary_puncture ? '#f59e0b' : '#10b981';
+      if (secKpi && reach) {
+        const secNeeded = reach.requires_secondary_puncture ?? (
+          reach.reachable_calyces_count != null && reach.total_calyces_count != null
+            ? (reach.reachable_calyces_count < reach.total_calyces_count)
+            : false
+        );
+        secKpi.textContent = secNeeded ? 'SECONDARY NEEDED' : 'NOT REQUIRED';
+        secKpi.style.color = secNeeded ? '#f59e0b' : '#10b981';
       }
     } catch (e) {
       console.warn('Endoscopy data error:', e);

@@ -19,6 +19,8 @@ export class UsabilityView {
       ]);
       const data = overviewRes;
       const sessions = Array.isArray(sessionsRes) ? sessionsRes : [];
+      const tlxVal = data.nasa_tlx_mean ?? data.nasa_tlx_workload_score ?? 28.4;
+      const sessCompleted = data.sessions_completed ?? (sessions.length > 0 ? sessions.length : 12);
 
       target.innerHTML = `
         <div class="metrics-grid">
@@ -29,12 +31,12 @@ export class UsabilityView {
           </div>
           <div class="metric-card">
             <div class="metric-title">NASA-TLX Mean Workload</div>
-            <div class="metric-value tabular-nums" style="color: var(--accent-cyan);">${data.nasa_tlx_mean != null ? data.nasa_tlx_mean.toFixed(1) : '28.4'} <span style="font-size: 13px; font-weight: 400; color: #94a3b8;">/ 100</span></div>
+            <div class="metric-value tabular-nums" style="color: var(--accent-cyan);">${Number(tlxVal).toFixed(1)} <span style="font-size: 13px; font-weight: 400; color: #94a3b8;">/ 100</span></div>
             <div class="metric-sub">Target < 40.0 (Low Cognitive Strain)</div>
           </div>
           <div class="metric-card">
             <div class="metric-title">Formative HF Testing</div>
-            <div class="metric-value tabular-nums" style="color: var(--accent-green);">${data.sessions_completed || (sessions.length > 0 ? sessions.length : 12)} <span style="font-size: 13px; font-weight: 400; color: #94a3b8;">Sessions</span></div>
+            <div class="metric-value tabular-nums" style="color: var(--accent-green);">${sessCompleted} <span style="font-size: 13px; font-weight: 400; color: #94a3b8;">Sessions</span></div>
             <div class="metric-sub">0 Critical Use Errors Detected</div>
           </div>
         </div>

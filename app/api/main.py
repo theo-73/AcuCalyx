@@ -339,6 +339,101 @@ MAX_ZIP_EXTRACT_SIZE = 2 * 1024 * 1024 * 1024  # 2 GB uncompressed limit
 MAX_ZIP_FILES = 2000
 
 
+def _process_and_deidentify_upload(
+    case_dir: Path,
+    dest_path: Path,
+    safe_filename: str,
+    case_id: str
+) -> tuple[int, Path]:
+    """Synchronous CPU/disk bound extraction and PHI de-identification executed in threadpool."""
+    raw_dir = dest_path.parent
+    input_file_count = 1
+    input_path = dest_path
+
+    if safe_filename.lower().endswith(".zip"):
+        extract_dir = raw_dir / "dicom_series"
+        extract_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            with zipfile.ZipFile(dest_path, "r") as z:
+                infolist = z.infolist()
+                if len(infolist) > MAX_ZIP_FILES:
+                    shutil.rmtree(case_dir, ignore_errors=True)
+                    raise HTTPException(status_code=400, detail=f"Archive contains {len(infolist)} files, exceeding limit of {MAX_ZIP_FILES}.")
+                total_uncompressed = sum(info.file_size for info in infolist)
+                if total_uncompressed > MAX_ZIP_EXTRACT_SIZE:
+                    shutil.rmtree(case_dir, ignore_errors=True)
+                    raise HTTPException(status_code=400, detail=f"Archive uncompressed size ({total_uncompressed // (1024*1024)} MB) exceeds limit.")
+                for member in infolist:
+                    if member.is_dir():
+                        continue
+                    if ".." in member.filename or member.filename.startswith("/") or member.filename.startswith("\\"):
+                        shutil.rmtree(case_dir, ignore_errors=True)
+                        raise HTTPException(status_code=400, detail=f"Illegal path in archive: {member.filename}")
+                    member_path = (extract_dir / member.filename).resolve()
+                    if not member_path.is_relative_to(extract_dir.resolve()):
+                        shutil.rmtree(case_dir, ignore_errors=True)
+                        raise HTTPException(status_code=400, detail=f"Illegal path escape in archive: {member.filename}")
+                    member_path.parent.mkdir(parents=True, exist_ok=True)
+                    with z.open(member) as src_f, open(member_path, "wb") as dst_f:
+                        shutil.copyfileobj(src_f, dst_f)
+        except zipfile.BadZipFile:
+            shutil.rmtree(case_dir, ignore_errors=True)
+            raise HTTPException(status_code=400, detail="Corrupted or invalid ZIP archive.")
+
+        dcm_files = [p for p in extract_dir.rglob("*") if p.is_file() and not p.name.startswith(".")]
+        input_file_count = len(dcm_files)
+        input_path = extract_dir
+
+        phi_guard = PHIGuard()
+        scrubbed_count = 0
+        for dcm_file in dcm_files:
+            try:
+                import pydicom
+                ds = pydicom.dcmread(str(dcm_file), force=True)
+                if hasattr(ds, "PatientName") or hasattr(ds, "PatientID") or hasattr(ds, "InstitutionName"):
+                    scrubbed = phi_guard.deidentify(ds)
+                    scrubbed.save_as(str(dcm_file))
+                    scrubbed_count += 1
+            except Exception as e:
+                logger.error(f"Fail-closed: DICOM de-identification failed on {dcm_file.name}: {e}")
+                shutil.rmtree(case_dir, ignore_errors=True)
+                raise HTTPException(status_code=422, detail=f"HIPAA/PS 3.15 de-identification failed on {dcm_file.name}: {e}")
+        if scrubbed_count > 0:
+            logger.info(f"PHIGuard: Successfully scrubbed direct PHI from {scrubbed_count} slices for case {case_id}")
+            log_case_audit_event(case_id, "PHI_SCRUBBED_INGESTION", {"scrubbed_slices": scrubbed_count})
+    elif safe_filename.lower().endswith(".dcm"):
+        try:
+            import pydicom
+            phi_guard = PHIGuard()
+            ds = pydicom.dcmread(str(dest_path), force=True)
+            scrubbed = phi_guard.deidentify(ds)
+            scrubbed.save_as(str(dest_path))
+            log_case_audit_event(case_id, "PHI_SCRUBBED_INGESTION", {"scrubbed_slices": 1})
+        except Exception as e:
+            logger.error(f"Fail-closed: Single DICOM de-identification failed: {e}")
+            shutil.rmtree(case_dir, ignore_errors=True)
+            raise HTTPException(status_code=422, detail=f"HIPAA/PS 3.15 de-identification failed on DICOM: {e}")
+    elif safe_filename.lower().endswith((".nii", ".nii.gz")):
+        try:
+            import nibabel as nib
+            img = nib.load(str(dest_path))
+            header = img.header
+            if hasattr(header, "get"):
+                for field in ("descrip", "aux_file", "intent_name"):
+                    if field in header:
+                        header[field] = b"" if isinstance(header[field], (bytes, bytearray)) else ""
+            img.to_filename(str(dest_path))
+            log_case_audit_event(case_id, "NIFTI_HEADER_SCRUBBED", {"filename": safe_filename})
+        except Exception as e:
+            if os.getenv("ACUCALYX_ENV") == "production":
+                logger.error(f"Fail-closed: NIfTI header de-identification failed: {e}")
+                shutil.rmtree(case_dir, ignore_errors=True)
+                raise HTTPException(status_code=422, detail=f"HIPAA/PS 3.15 de-identification failed on NIfTI: {e}")
+            logger.warning(f"NIfTI header scrub note (test environment): {e}")
+
+    return input_file_count, input_path
+
+
 @app.post("/api/cases/upload", response_model=CaseUploadResponse)
 async def upload_case(
     file: UploadFile = File(...),
@@ -387,91 +482,14 @@ async def upload_case(
                 )
             f.write(chunk)
 
-    input_file_count = 1
-    input_path = dest_path
-
-    # If zip, inspect and safely extract slices
-    if safe_filename.lower().endswith(".zip"):
-        extract_dir = raw_dir / "dicom_series"
-        extract_dir.mkdir(parents=True, exist_ok=True)
-        try:
-            with zipfile.ZipFile(dest_path, "r") as z:
-                infolist = z.infolist()
-                if len(infolist) > MAX_ZIP_FILES:
-                    shutil.rmtree(case_dir, ignore_errors=True)
-                    raise HTTPException(status_code=400, detail=f"Archive contains {len(infolist)} files, exceeding limit of {MAX_ZIP_FILES}.")
-                total_uncompressed = sum(info.file_size for info in infolist)
-                if total_uncompressed > MAX_ZIP_EXTRACT_SIZE:
-                    shutil.rmtree(case_dir, ignore_errors=True)
-                    raise HTTPException(status_code=400, detail=f"Archive uncompressed size ({total_uncompressed // (1024*1024)} MB) exceeds limit.")
-                for member in infolist:
-                    if member.is_dir():
-                        continue
-                    if ".." in member.filename or member.filename.startswith("/") or member.filename.startswith("\\"):
-                        shutil.rmtree(case_dir, ignore_errors=True)
-                        raise HTTPException(status_code=400, detail=f"Illegal path in archive: {member.filename}")
-                    member_path = (extract_dir / member.filename).resolve()
-                    if not member_path.is_relative_to(extract_dir.resolve()):
-                        shutil.rmtree(case_dir, ignore_errors=True)
-                        raise HTTPException(status_code=400, detail=f"Illegal path escape in archive: {member.filename}")
-                    member_path.parent.mkdir(parents=True, exist_ok=True)
-                    with z.open(member) as src_f, open(member_path, "wb") as dst_f:
-                        shutil.copyfileobj(src_f, dst_f)
-        except zipfile.BadZipFile:
-            shutil.rmtree(case_dir, ignore_errors=True)
-            raise HTTPException(status_code=400, detail="Corrupted or invalid ZIP archive.")
-
-        dcm_files = [p for p in extract_dir.rglob("*") if p.is_file() and not p.name.startswith(".")]
-        input_file_count = len(dcm_files)
-        input_path = extract_dir
-
-        # HIPAA / PS 3.15 Basic Application Level Confidentiality Profile Guard (Fail-Closed)
-        phi_guard = PHIGuard()
-        scrubbed_count = 0
-        for dcm_file in dcm_files:
-            try:
-                import pydicom
-                ds = pydicom.dcmread(str(dcm_file), force=True)
-                if hasattr(ds, "PatientName") or hasattr(ds, "PatientID") or hasattr(ds, "InstitutionName"):
-                    scrubbed = phi_guard.deidentify(ds)
-                    scrubbed.save_as(str(dcm_file))
-                    scrubbed_count += 1
-            except Exception as e:
-                logger.error(f"Fail-closed: DICOM de-identification failed on {dcm_file.name}: {e}")
-                shutil.rmtree(case_dir, ignore_errors=True)
-                raise HTTPException(status_code=422, detail=f"HIPAA/PS 3.15 de-identification failed on {dcm_file.name}: {e}")
-        if scrubbed_count > 0:
-            logger.info(f"PHIGuard: Successfully scrubbed direct PHI from {scrubbed_count} slices for case {case_id}")
-            log_case_audit_event(case_id, "PHI_SCRUBBED_INGESTION", {"scrubbed_slices": scrubbed_count})
-    elif safe_filename.lower().endswith(".dcm"):
-        try:
-            import pydicom
-            phi_guard = PHIGuard()
-            ds = pydicom.dcmread(str(dest_path), force=True)
-            scrubbed = phi_guard.deidentify(ds)
-            scrubbed.save_as(str(dest_path))
-            log_case_audit_event(case_id, "PHI_SCRUBBED_INGESTION", {"scrubbed_slices": 1})
-        except Exception as e:
-            logger.error(f"Fail-closed: Single DICOM de-identification failed: {e}")
-            shutil.rmtree(case_dir, ignore_errors=True)
-            raise HTTPException(status_code=422, detail=f"HIPAA/PS 3.15 de-identification failed on DICOM: {e}")
-    elif safe_filename.lower().endswith((".nii", ".nii.gz")):
-        try:
-            import nibabel as nib
-            img = nib.load(str(dest_path))
-            header = img.header
-            if hasattr(header, "get"):
-                for field in ("descrip", "aux_file", "intent_name"):
-                    if field in header:
-                        header[field] = b"" if isinstance(header[field], (bytes, bytearray)) else ""
-            img.to_filename(str(dest_path))
-            log_case_audit_event(case_id, "NIFTI_HEADER_SCRUBBED", {"filename": safe_filename})
-        except Exception as e:
-            if os.getenv("ACUCALYX_ENV") == "production":
-                logger.error(f"Fail-closed: NIfTI header de-identification failed: {e}")
-                shutil.rmtree(case_dir, ignore_errors=True)
-                raise HTTPException(status_code=422, detail=f"HIPAA/PS 3.15 de-identification failed on NIfTI: {e}")
-            logger.warning(f"NIfTI header scrub note (test environment): {e}")
+    # Offload blocking archive extraction, filesystem traversal, and DICOM/NIfTI PHI scrubbing to threadpool
+    input_file_count, input_path = await run_in_threadpool(
+        _process_and_deidentify_upload,
+        case_dir,
+        dest_path,
+        safe_filename,
+        case_id
+    )
 
     now_iso = datetime.now(timezone.utc).isoformat()
     meta = {

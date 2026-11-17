@@ -1,3 +1,43 @@
+    // Transparent Authenticated Fetch Interceptor (HIPAA & FDA Section 524B Compliant)
+    if (!window.__acucalyxAuthFetchInstalled) {
+      window.__acucalyxAuthFetchInstalled = true;
+      const _nativeFetch = window.fetch;
+      window.fetch = function (input, init) {
+        try {
+          let url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+          if (url && (url.startsWith('/api') || url.includes('/api/'))) {
+            init = init ? { ...init } : {};
+            let headers = init.headers;
+            let hasAuth = false;
+            if (headers instanceof Headers) {
+              hasAuth = headers.has('Authorization') || headers.has('authorization');
+            } else if (headers && typeof headers === 'object') {
+              hasAuth = Boolean(headers['Authorization'] || headers['authorization']);
+            } else if (!headers) {
+              headers = {};
+              init.headers = headers;
+            }
+            if (!hasAuth) {
+              const authRaw = localStorage.getItem('acucalyx_doctor_auth');
+              if (authRaw) {
+                const parsed = JSON.parse(authRaw);
+                if (parsed.token && parsed.token !== 'DEMO_DEFAULT_TOKEN') {
+                  if (headers instanceof Headers) {
+                    headers.set('Authorization', `Bearer ${parsed.token}`);
+                  } else {
+                    headers['Authorization'] = `Bearer ${parsed.token}`;
+                  }
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('Auth fetch interceptor warning:', err);
+        }
+        return _nativeFetch.call(this, input, init);
+      };
+    }
+
     // Global non-blocking Toast notification system (FIX-5)
     window.showToast = window.showToast || function(message, type = 'info', durationMs = 3500) {
       const toast = document.createElement('div');

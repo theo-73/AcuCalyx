@@ -459,4 +459,35 @@ def test_frontend_workbench_and_summary_card_assets():
     assert "#modal-summary-card" in css_text
 
 
+def test_validation_gate_endpoint_structure():
+    """Verifies that GET /api/validation/m15-ctu-validation-gate returns enriched metrics and cases."""
+    res = client.get("/api/validation/m15-ctu-validation-gate")
+    assert res.status_code == 200
+    data = res.json()
+    assert "status" in data
+    assert "cases" in data
+    assert isinstance(data["cases"], list)
+    assert len(data["cases"]) >= 1
+    assert "summary_metrics" in data
+    assert "centerline_mae_mean_mm" in data["summary_metrics"]
+    assert "calyx_sensitivity_mean" in data["summary_metrics"]
+
+
+def test_usability_overview_and_sessions_endpoints():
+    """Verifies that GET /api/usability/overview and /api/usability/sessions return proper metrics."""
+    res_ov = client.get("/api/usability/overview")
+    assert res_ov.status_code == 200
+    ov_data = res_ov.json()
+    assert "nasa_tlx_mean" in ov_data
+    assert "sus_mean" in ov_data
+    assert "sessions_completed" in ov_data
+    assert ov_data["sessions_completed"] >= 0
+
+    res_sess = client.get("/api/usability/sessions")
+    assert res_sess.status_code == 200
+    sessions = res_sess.json()
+    assert isinstance(sessions, list)
+
+
+
 
