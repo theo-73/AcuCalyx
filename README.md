@@ -160,7 +160,7 @@ The web interface combines high-performance WebGL 3D rendering with synchronized
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/Tejas3479/AcuCalyx.git
+git clone https://github.com/theo-73/AcuCalyx.git
 cd AcuCalyx
 ```
 

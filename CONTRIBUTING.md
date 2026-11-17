@@ -41,7 +41,7 @@ Depending on your access level, choose the appropriate contribution model:
 1. **Direct pushes to `main` are restricted.** All changes must enter `main` through a Pull Request.
 2. Clone the central repository directly:
    ```bash
-   git clone https://github.com/Tejas3479/AcuCalyx.git
+   git clone https://github.com/theo-73/AcuCalyx.git
    cd AcuCalyx
    ```
 3. Create a dedicated feature or bugfix branch on the primary repository:
@@ -56,13 +56,13 @@ Depending on your access level, choose the appropriate contribution model:
    ```bash
    git clone https://github.com/<YOUR-USERNAME>/AcuCalyx.git
    cd AcuCalyx
-   git remote add upstream https://github.com/Tejas3479/AcuCalyx.git
+   git remote add upstream https://github.com/theo-73/AcuCalyx.git
    ```
 3. Create a descriptive feature branch:
    ```bash
    git checkout -b feat/your-feature-name
    ```
-4. Push your branch to your fork and open a Pull Request against `Tejas3479/AcuCalyx:main`.
+4. Push your branch to your fork and open a Pull Request against `theo-73/AcuCalyx:main`.
 
 ---
 
